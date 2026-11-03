@@ -1093,18 +1093,20 @@ const festCrowd = (() => {
 const FLASH_AT = new THREE.Vector3(0.022, 0.055, -0.008), FLASH_RGB = new THREE.Color(0xfff6e8); // flash, in the phone's own frame
 let festMusicT = 0;
 const crowdC = new THREE.Color(), crowdM = new THREE.Matrix4(), crowdM2 = new THREE.Matrix4(), crowdQ = new THREE.Quaternion(), crowdE = new THREE.Euler(0, 0, 0, 'YXZ'), crowdP = new THREE.Vector3(), crowdS = new THREE.Vector3();
-// Lasers: 40 laser heads in uniform rows (along the stage floor, on the front truss, up both towers), 7 beams each,
+// Lasers: 20 laser heads in uniform rows (along the stage floor, on the front truss, up both towers), 7 beams each,
 // all one instanced mesh. Each head is a small dark box with a faint glow at its aperture. The beams draw geometric
 // patterns aimed at the crowd, changing every bar; full brightness in laser sections, a few soft beams otherwise.
 const LASER_F = 7, laserHeads = [];
-for (let i = 0; i < 14; i++) laserHeads.push({ row: 'floor', p: new THREE.Vector3(-12.35 + i * 1.9, FEST_DECK_TOP + 0.12, FRONT_Z - 0.9) });
-for (let i = 0; i < 14; i++) laserHeads.push({ row: 'top', p: new THREE.Vector3(-12.35 + i * 1.9, 10.2, 3.2) });
-for (const side of [-1, 1]) for (let i = 0; i < 6; i++) laserHeads.push({ row: 'side', side, p: new THREE.Vector3(side * 12.6, FEST_GROUND + 3 + i * 1.6, -7.2) });
-laserHeads.forEach((h, i) => { h.i = i; h.k = h.row === 'side' ? i - 28 - (h.side > 0 ? 6 : 0) : i % 14; h.u = h.row === 'side' ? h.k / 5 : h.k / 13; });
+const LASER_ROW = 7, LASER_SIDE = 3;
+for (let i = 0; i < LASER_ROW; i++) laserHeads.push({ row: 'floor', k: i, u: i / (LASER_ROW - 1), p: new THREE.Vector3(-12 + i * 4, FEST_DECK_TOP + 0.12, FRONT_Z - 0.9) });
+for (let i = 0; i < LASER_ROW; i++) laserHeads.push({ row: 'top', k: i, u: i / (LASER_ROW - 1), p: new THREE.Vector3(-12 + i * 4, 10.2, 3.2) });
+for (const side of [-1, 1]) for (let i = 0; i < LASER_SIDE; i++) laserHeads.push({ row: 'side', side, k: i, u: i / (LASER_SIDE - 1), p: new THREE.Vector3(side * 12.6, FEST_GROUND + 3.5 + i * 3, -7.2) });
+laserHeads.forEach((h, i) => { h.i = i; });
 const laserBeams = (() => {
   const n = laserHeads.length * LASER_F;
-  // A beam is brightest at the head and fades out over the crowd (vertex colours along its length)
-  const geo = new THREE.BoxGeometry(0.035, 0.035, 1).translate(0, 0, 0.5), zs = geo.attributes.position.array;
+  // A beam starts as a point at the head and stays hair-thin; it is brightest at the head and fades out over the crowd
+  // (vertex colours along its length)
+  const geo = new THREE.CylinderGeometry(0.012, 0.0005, 1, 4, 1, true).translate(0, 0.5, 0).rotateX(Math.PI / 2), zs = geo.attributes.position.array;
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(zs.length).map((_, i) => 1 - 0.92 * zs[i - (i % 3) + 2]), 3));
   const m = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }), n);
   m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
