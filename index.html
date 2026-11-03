@@ -1072,7 +1072,7 @@ for (const side of [-1, 1]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(8
 // camera at the stage front films the dancers and the big screen shows the feed. It renders only while shown, small,
 // every other frame.
 let festArt = [];
-const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0, fx: 0, camFx: 0, layered: false, retryAt: 0 };
+const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0, fx: 0, camFx: 0, layered: false, retryAt: 0, lastBar: 0 };
 const bcTarget = new THREE.WebGLRenderTarget(512, 196, { samples: 0 });
 const bcCam = new THREE.PerspectiveCamera(24, 512 / 196, 0.1, 80), bcClear = new THREE.Color(); bcCam.layers.set(5);
 function nextArt() {
@@ -1088,6 +1088,10 @@ function nextArt() {
 }
 function updateScreen(beat, bar, dt, t) {
   const S = screenShow, u = festScreenMat.uniforms;
+  // A new song (or a seek back) restarts the bar count: restart the timings too, or a still would stay up until the
+  // new song reached the old bar number
+  if (bar < S.lastBar - 1) { S.until = bar; S.camUntil = bar; S.bar = null; }
+  S.lastBar = bar;
   if (bar !== S.bar && mod(bar, 8) === 0 && musicOn()) {
     S.bar = bar;
     if (S.camTo && bar >= S.camUntil) S.camTo = 0;
