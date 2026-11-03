@@ -1034,10 +1034,20 @@ const festCrowd = (() => {
   const ARM = 0.64, tip = (x0, y0, ang) => [x0 + Math.sin(ang) * ARM, y0 - Math.cos(ang) * ARM];
   const arm = (x0, y0, ang, hand) => [...tag(3, part(new THREE.CylinderGeometry(0.05, 0.04, ARM, 7), x0 + Math.sin(ang) * ARM / 2, y0 - Math.cos(ang) * ARM / 2, ang)),
     ...hand.map(g => g.rotateZ(ang).translate(...tip(x0, y0, ang), 0))];
+  // A raised arm, bent at the elbow: the upper arm reaches out and up, the forearm closer to vertical
+  const raised = (side, hand) => {
+    const [x0, y0] = side < 0 ? L : R, a1 = side * (Math.PI - 0.75), a2 = side * (Math.PI - 0.22), U = 0.32, F = 0.31;
+    const ex = x0 + Math.sin(a1) * U, ey = y0 - Math.cos(a1) * U, hx = ex + Math.sin(a2) * F, hy = ey - Math.cos(a2) * F;
+    return [...tag(3, part(new THREE.CylinderGeometry(0.05, 0.045, U, 7), (x0 + ex) / 2, (y0 + ey) / 2, a1),
+      part(new THREE.CylinderGeometry(0.045, 0.038, F, 7), (ex + hx) / 2, (ey + hy) / 2, a2), new THREE.SphereGeometry(0.046, 7, 5).translate(ex, ey, 0)),
+      ...hand.map(g => g.rotateZ(a2).translate(hx, hy, 0))];
+  };
   const body = () => [
     ...tag(2, part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), -0.09, 0.43), part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), 0.09, 0.43)),
-    ...tag(1, part(new THREE.CylinderGeometry(0.2, 0.16, 0.6, 10), 0, 1.15, 0, 1, 0.6),                         // torso, wider at the shoulders
-      part(new THREE.CapsuleGeometry(0.075, 0.3, 2, 8), 0, 1.42, Math.PI / 2, 1, 0.8)),                          // shoulders
+    // torso: one turned profile from the hips through the waist and chest, rounding over the shoulders into the neck
+    ...tag(1, part(new THREE.LatheGeometry([[0.001, 0.84], [0.15, 0.85], [0.16, 0.95], [0.148, 1.08], [0.18, 1.26], [0.2, 1.37], [0.185, 1.44], [0.13, 1.5], [0.06, 1.53], [0.001, 1.535]]
+      .map(([r, y]) => new THREE.Vector2(r, y)), 12), 0, 0, 0, 1, 0.62),
+      new THREE.SphereGeometry(0.068, 8, 6).scale(1, 0.9, 0.85).translate(-0.205, 1.43, 0), new THREE.SphereGeometry(0.068, 8, 6).scale(1, 0.9, 0.85).translate(0.205, 1.43, 0)), // shoulders
     ...tag(0, part(new THREE.CylinderGeometry(0.05, 0.055, 0.12, 7), 0, 1.52),                                   // neck
       part(new THREE.SphereGeometry(0.105, 10, 8).scale(0.9, 1.12, 1), 0, 1.66))];                                // head
   // Hair, one instanced mesh per style, sitting on the head (the face is at -z): short, long down the back, a bun,
@@ -1053,16 +1063,16 @@ const festCrowd = (() => {
   const SKIN = [0xf1c8a8, 0xe0ac85, 0xc68a5f, 0x9c6640, 0x6e452a, 0x4a2e1c];
   const CLOTH = [0x15151a, 0xe8e8e8, 0x1f3a8a, 0xb01c2c, 0x2e7d32, 0xf2b705, 0x7b2d8b, 0x2aa8c4, 0xff6fa8, 0x6b4f3a, 0x8a8f98, 0xff8a1e];
   const PANTS = [0x1a1d2e, 0x23324f, 0x101012, 0x4a4036, 0x6d6e72, 0x2f4f2f, 0x8a6b4a];
-  const HAIRC = [0x0e0b09, 0x2b1b10, 0x4a2f1b, 0x8a6a3e, 0xd8b878, 0x8e3b1f, 0xc04080, 0x3060d0];
+  const HAIRC = [0x0e0b09, 0x0e0b09, 0x0e0b09, 0x2b1b10, 0x2b1b10, 0x2b1b10, 0x4a2f1b, 0x4a2f1b, 0x8a6a3e, 0xd8b878, 0xd8b878, 0x8e3b1f, 0xc04080, 0x3060d0]; // mostly natural
   const any = a => a[Math.floor(Math.random() * a.length)];
   const L = [-0.23, 1.44], R = [0.23, 1.44], UP = Math.PI - 0.4, PHONE_ARM = Math.PI - 0.15;
   const downL = () => arm(...L, -0.07, fist()), downR = () => arm(...R, 0.07, fist());
   const shapes = {
     down: [downL(), downR()],
-    open: [arm(...L, -UP, open(-1)), arm(...R, UP, open(1))],   // thumbs towards the head, palms to the stage
-    fists: [arm(...L, -UP, fist()), arm(...R, UP, fist())],
-    oneFist: [downL(), arm(...R, Math.PI - 0.3, fist())],
-    oneOpen: [downL(), arm(...R, Math.PI - 0.3, open(1))],
+    open: [raised(-1, open(-1)), raised(1, open(1))],   // thumbs towards the head, palms to the stage
+    fists: [raised(-1, fist()), raised(1, fist())],
+    fistL: [raised(-1, fist()), downR()], fistR: [downL(), raised(1, fist())],
+    openL: [raised(-1, open(-1)), downR()], openR: [downL(), raised(1, open(1))],
     phone: [downL()],  // the phone arm is its own mesh so it can lift the phone when the music starts
   };
   const people = [], c = new THREE.Color();
@@ -1071,7 +1081,8 @@ const festCrowd = (() => {
     if (people.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 0.55 * 0.55)) continue;
     // Most people stand still; some bob on the beat, a few sway. Raised arms are rare, and mostly on the bobbers.
     const r = Math.random(), mode = r < 0.62 ? 0 : r < 0.86 ? 1 : 2, q = Math.random() / (mode === 1 ? 1 : 0.25);
-    const shape = Math.random() < 0.03 ? 'phone' : q < 0.04 ? 'open' : q < 0.07 ? 'fists' : q < 0.13 ? (Math.random() < 0.5 ? 'oneFist' : 'oneOpen') : 'down';
+    // Mostly one hand up (left or right), a few both
+    const shape = Math.random() < 0.03 ? 'phone' : q < 0.015 ? 'open' : q < 0.03 ? 'fists' : q < 0.12 ? (Math.random() < 0.5 ? 'fist' : 'open') + (Math.random() < 0.5 ? 'L' : 'R') : 'down';
     people.push({ x, z, mode, shape, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
       yaw: (Math.random() * 2 - 1) * 0.45, lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0,
       leanSpeed: 0.25 + Math.random() * 0.5,
