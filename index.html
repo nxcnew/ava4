@@ -678,12 +678,17 @@ async function wallFaces(file, src) {
 // `top` (fractions). Frames the biggest face (the main character) with headroom above and the chin below, so empty
 // space at the top is dropped. `fits` says whether that face is whole and no other face is cut by the edges.
 function faceWindow(faces, vis) {
-  const main = faces.reduce((p, f) => !p || f[2] * f[3] > p[2] * p[3] ? f : p, null);
-  if (!main) return { top: 0, fits: false };
+  // Anchor: the face nearest the middle of the picture, among the faces at least a quarter the size of the biggest
+  // (so a tiny face in the background never becomes the anchor)
+  const big = faces.reduce((m, f) => Math.max(m, f[2] * f[3]), 0);
+  const main = faces.filter(f => f[2] * f[3] >= 0.25 * big)
+    .reduce((p, f) => !p || Math.abs(f[0] + f[2] / 2 - 0.5) < Math.abs(p[0] + p[2] / 2 - 0.5) ? f : p, null);
+  if (!main) return { top: 0, fits: false, whole: false };
   const head = main[1] - 0.15 * main[3], chin = main[1] + 1.1 * main[3];
   const top = clamp(head - 0.05 * vis, 0, Math.max(0, 1 - vis)), bot = top + vis;
   const cut = f => (f[1] < top && f[1] + f[3] > top) || (f[1] < bot && f[1] + f[3] > bot);
-  return { top, fits: head >= top - 1e-6 && chin <= bot + 1e-6 && !faces.some(cut) };
+  const whole = head >= top - 1e-6 && chin <= bot + 1e-6;     // the anchor face is fully in view
+  return { top, whole, fits: whole && !faces.some(cut) };
 }
 async function setWallpaper(blob, which = 'both') {
   try {
@@ -3006,8 +3011,11 @@ async function randomWalls(imgs) {
   // walls get the rest.
   const PANO = 2.85, WIDE = 1.2;
   const wide = [PANO, WIDE].map(w => looks.filter(k => k.aspect >= w)).find(p => p.length);
-  const backs = wide || [looks.reduce((p, q) => q.aspect > p.aspect ? q : p)];
-  const sides = looks.filter(k => k.aspect < (wide && wide[0].aspect >= PANO ? PANO : WIDE) && !(backs.length === 1 && k === backs[0]));
+  const backs0 = wide || [looks.reduce((p, q) => q.aspect > p.aspect ? q : p)];
+  // Crowd scenes (more than three faces) can go on the back wall too, framed on their centre face
+  const many = k => (k.faces || []).filter(f => f[2] * f[3] > 0.002).length > 3;
+  const backs = [...backs0, ...looks.filter(k => many(k) && !backs0.includes(k))];
+  const sides = looks.filter(k => k.aspect < (wide && wide[0].aspect >= PANO ? PANO : WIDE) && !(backs0.length === 1 && k === backs0[0]));
   // Images made in the side walls' own shape (8:3) show whole, so they come first. Otherwise a side wall shows only a
   // strip of the image at full width, so it gets images with one face that fits that strip whole, sharp ones
   // (1000 px+) first; the narrower each choice, the more it is preferred, as long as two remain.
@@ -3016,9 +3024,10 @@ async function randomWalls(imgs) {
   const single = sides.filter(k => faces(k).length === 1 && faceWindow(faces(k), vis(k)).fits);
   const sharp = single.filter(k => k.px >= 1000);
   const fitting = sides.filter(k => faces(k).length && faceWindow(k.faces, vis(k)).fits);
-  // The 8:3 images are favoured (about two loads in three); otherwise any other shape where one face fits the strip
-  // whole and the image is sharp enough, so the 3:2, 16:9 and square images get their turn too.
-  const crops = sharp.filter(k => !shaped.includes(k));
+  // The 8:3 images are favoured (about two loads in three); otherwise any other shape that is sharp enough and whose
+  // centre face fits the strip whole (other faces may be cut at the edges), so the 3:2, 16:9 and square images and
+  // the group shots get their turn too.
+  const crops = sides.filter(k => !shaped.includes(k) && k.px >= 1000 && faces(k).length && faceWindow(faces(k), vis(k)).whole);
   const pool = [shaped, sharp, single, fitting, sides, looks.filter(k => !backs.includes(k)), looks].find(p => p.length >= 2) || looks;
   const both = pool === shaped ? [...shaped, ...crops] : pool;
   const left = pool === shaped && crops.length && Math.random() < 0.35 ? pick(crops) : pick(pool);

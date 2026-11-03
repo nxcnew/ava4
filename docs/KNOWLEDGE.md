@@ -6,6 +6,16 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v24 - 2026-11-03 - Wall cleanup and group shots
+
+**Cleanup:** the owner reviewed the 73 unused wall images and deleted 27 (the old low-res collages and some group shots). 130 remain.
+
+**General rules** (owner: no per-image rules):
+
+- **Anchor face (`faceWindow`):** the face nearest the picture's horizontal centre, among faces at least a quarter the size of the biggest (was the biggest face). `whole` means the anchor face is fully inside the strip; `fits` additionally means no other face is cut.
+- **Side walls:** "crops" are any non-8:3 images of 1000 px or more whose anchor face is whole (other faces may be cut). The left wall picks one about 35% of the time, otherwise 8:3.
+- **Back wall:** also takes any image with more than 3 faces, framed on its centre face. Pools today: 26 at 8:3, 69 side crops, 25 wide back panoramas plus 28 crowd scenes.
+
 ### v23 - 2026-11-03 - Studio side walls also use other shapes that crop well
 
 **Problem:** 106 of 157 wall images never appeared. 48 are 3:2, 14 are 16:9 and 13 square; the side-wall pool only took 8:3 once there were two of them, and the back wall only takes 3:1 and wider.
