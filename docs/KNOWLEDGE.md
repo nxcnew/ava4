@@ -6,6 +6,16 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v18 - 2026-11-03 - Performance: adaptive resolution, lighter crowd, screen skips hidden work
+
+**Problem:** the owner reported zooming on the main stage getting stuck. Profiling showed the JS per frame was small (festUpdate about 0.2 ms, arena about 0.3 ms). The load was on the GPU: about 514k triangles per frame, plus the LED screen's fractal shader running per pixel at Retina resolution.
+
+**Fixes:**
+
+- **`watchFps`:** the page measures fps every 0.5 s. Three slow windows in a row (under 45 fps) step the pixel ratio down by 0.25, to a floor of 1. Eight fast windows (over 57 fps) step it back up to min(devicePixelRatio, 2). It ignores hidden tabs.
+- **Screen shader:** skips the generative looks while a still fully covers the screen (`uArtMix > 0.98` and no camera feed).
+- **Crowd geometry:** lower segment counts (limbs 5-sided and open-ended, lathe 8, head 8x6, shoulders 6x4, fists 5x4, hair caps 9x5). Triangles went from about 514k to 320k per frame.
+
 ### v17 - 2026-11-03 - Screen art filters, camera styles, booth face, dim crowd, originals guard
 
 **Art filters** (in the screen shader, the equivalent of CSS filters):
