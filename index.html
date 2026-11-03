@@ -1030,7 +1030,7 @@ const festScreenMat = new THREE.ShaderMaterial({
         else if (uArtFx > 3.5 && uArtFx < 4.5) { float band = exp(-pow((vUv.x + vUv.y * 0.4 - fract(uBeat / 4.0) * 1.8 + 0.2) * 6.0, 2.0));
           art += art * band * 1.1 + smoothstep(0.6, 1.0, lum) * uPulse * 0.5; }
         else if (uArtFx > 4.5 && uArtFx < 5.5) art = mix(art, vec3(0.92, 0.97, 1.05) * pow(lum, 0.85) + pow(lum, 6.0) * (0.35 + 0.6 * uPulse), 0.7); // chrome: silver with metallic highlights, never inverted
-        else if (uArtFx > 5.5 && uArtFx < 6.5) art = mix(vec3(lum), art, clamp(uPulse * 1.6, 0.0, 1.0));
+        else if (uArtFx > 5.5 && uArtFx < 6.5) art = mix(vec3(lum), art, 0.55 * exp(-mod(uBeat, 4.0) * 1.6) * uLive); // greyscale; colour blooms on each bar's downbeat
         art *= (0.7 + 0.45 * uPulse * uLive) * (1.0 - 0.3 * uChill);
         outc = mix(outc, art + col * lv * 0.35, uArtMix);
       }
