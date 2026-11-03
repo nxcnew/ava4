@@ -1030,10 +1030,8 @@ const festCrowd = (() => {
     fists: [arm(...L, -UP, fist()), arm(...R, UP, fist())],
     oneFist: [downL(), arm(...R, Math.PI - 0.3, fist())],
     oneOpen: [downL(), arm(...R, Math.PI - 0.3, open(1))],
-    phone: [downL(), arm(...R, PHONE_ARM, fist())],
+    phone: [downL()],  // the phone arm is its own mesh so it can lift the phone when the music starts
   };
-  const [px, py] = tip(...R, PHONE_ARM);
-  const phoneAt = new THREE.Matrix4().makeTranslation(px, py + 0.08, -0.035), flashAt = new THREE.Vector3(px + 0.02, py + 0.13, -0.05);
   const people = [], c = new THREE.Color();
   for (let tries = 0; people.length < CROWD_N && tries < CROWD_N * 40; tries++) {
     const z = 7 + Math.pow(Math.random(), 0.9) * 6.5, spread = 12 + (z - 7) * 1.2, x = (Math.random() * 2 - 1) * spread;
@@ -1053,16 +1051,32 @@ const festCrowd = (() => {
     festG.add(mesh);
     return mesh;
   });
-  // Phones: a lit screen facing the holder, and the flash as a glow on the stage side
-  const holders = people.filter(p => p.shape === 'phone');
-  const phones = new THREE.InstancedMesh(new THREE.BoxGeometry(0.075, 0.15, 0.012), new THREE.MeshBasicMaterial({ color: 0xa8c4ff }), Math.max(1, holders.length));
-  phones.count = holders.length; phones.frustumCulled = false; festG.add(phones);
-  const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(Math.max(1, holders.length) * 3), 3));
-  const flashes = new THREE.Points(fg, new THREE.PointsMaterial({ size: 0.45, map: glowTex, color: 0xfff6e8, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  // Phones: each holder's right arm hangs from the shoulder and lifts the phone a few seconds after the music starts
+  // (everyone at their own moment), and lowers it when the music stops. Phones differ in size, grip (portrait or
+  // landscape) and screen tint; most have the flash on, as a glow on the stage side, only once the phone is up.
+  const holders = people.filter(p => p.shape === 'phone'), nH = Math.max(1, holders.length);
+  const TINTS = [0xa8c4ff, 0xdfe8ff, 0xffe6c4, 0xc4ffe4, 0xffc8ee, 0xf4f4f4];
+  holders.forEach(p => {
+    const sc = 0.85 + Math.random() * 0.4, land = Math.random() < 0.3;
+    p.phone = { lift: 0, delay: 2 + Math.random() * 14, flash: Math.random() < 0.75, tint: new THREE.Color(pick(TINTS)),
+      local: new THREE.Matrix4().makeTranslation(0, -ARM - 0.075, -0.035).multiply(new THREE.Matrix4().makeRotationZ(land ? Math.PI / 2 : 0))
+        .multiply(new THREE.Matrix4().makeScale(sc, sc * (0.9 + Math.random() * 0.2), 1)) };
+  });
+  const lambert = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const phoneArms = new THREE.InstancedMesh(mergeGeometries(arm(0, 0, 0, fist())), lambert, nH);
+  const phones = new THREE.InstancedMesh(new THREE.BoxGeometry(0.072, 0.15, 0.01), new THREE.MeshBasicMaterial({ color: 0xffffff }), nH);
+  [phoneArms, phones].forEach(m => { m.count = holders.length; m.frustumCulled = false; festG.add(m); });
+  holders.forEach((p, k) => { phoneArms.setColorAt(k, c.setHSL(p.hue, 0.25, p.l)); phones.setColorAt(k, c.setRGB(0, 0, 0)); });
+  const fg = new THREE.BufferGeometry();
+  fg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nH * 3), 3));
+  fg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nH * 3), 3));
+  const flashes = new THREE.Points(fg, new THREE.PointsMaterial({ size: 0.45, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   flashes.frustumCulled = false; festG.add(flashes);
-  return { people, meshes, holders, phones, flashes, phoneAt, flashAt };
+  return { people, meshes, holders, phoneArms, phones, flashes, shoulder: new THREE.Matrix4().makeTranslation(...R, 0), PHONE_ARM };
 })();
-const crowdM = new THREE.Matrix4(), crowdM2 = new THREE.Matrix4(), crowdQ = new THREE.Quaternion(), crowdE = new THREE.Euler(0, 0, 0, 'YXZ'), crowdP = new THREE.Vector3(), crowdS = new THREE.Vector3();
+const FLASH_AT = new THREE.Vector3(0.022, 0.055, -0.008), FLASH_RGB = new THREE.Color(0xfff6e8); // flash, in the phone's own frame
+let festMusicT = 0;
+const crowdC = new THREE.Color(), crowdM = new THREE.Matrix4(), crowdM2 = new THREE.Matrix4(), crowdQ = new THREE.Quaternion(), crowdE = new THREE.Euler(0, 0, 0, 'YXZ'), crowdP = new THREE.Vector3(), crowdS = new THREE.Vector3();
 // Lasers: from the top truss and both towers
 const lasers = [];
 for (let i = 0; i < 30; i++) {
@@ -1130,14 +1144,23 @@ function festUpdate(beat, pulse, dt, t) {
     const a = p.lean * (0.5 + 0.5 * Math.sin((beat * p.leanSpeed + p.ph * 8) * Math.PI)) * energy; // lean from the feet
     crowdQ.setFromEuler(crowdE.set(0, p.yaw, a));
     p.mesh.setMatrixAt(p.i, crowdM.compose(crowdP.set(p.x + sway, y, p.z), crowdQ, crowdS.set(p.w, p.h, p.w)));
-    if (p.shape === 'phone') {
-      const k = festCrowd.holders.indexOf(p);
-      festCrowd.phones.setMatrixAt(k, crowdM2.multiplyMatrices(crowdM, festCrowd.phoneAt));
-      crowdP.copy(festCrowd.flashAt).applyMatrix4(crowdM).toArray(festCrowd.flashes.geometry.attributes.position.array, k * 3);
+    if (p.phone) {
+      const C = festCrowd, k = C.holders.indexOf(p), ph = p.phone;
+      ph.lift = clamp(ph.lift + dt * (festMusicT > ph.delay ? 0.4 : -0.6), 0, 1);
+      const up = easeIO(ph.lift);
+      crowdM.multiply(C.shoulder).multiply(crowdM2.makeRotationZ(0.07 + (C.PHONE_ARM - 0.07) * up));
+      C.phoneArms.setMatrixAt(k, crowdM);
+      C.phones.setMatrixAt(k, crowdM2.multiplyMatrices(crowdM, ph.local));
+      C.phones.setColorAt(k, crowdC.copy(ph.tint).multiplyScalar(0.12 + 0.88 * up));
+      crowdP.copy(FLASH_AT).applyMatrix4(crowdM2).toArray(C.flashes.geometry.attributes.position.array, k * 3);
+      crowdC.copy(FLASH_RGB).multiplyScalar(ph.flash ? clamp((ph.lift - 0.75) / 0.25, 0, 1) : 0).toArray(C.flashes.geometry.attributes.color.array, k * 3);
     }
   }
+  festMusicT = musicOn() ? festMusicT + dt : 0;
   festCrowd.meshes.forEach(m => m.instanceMatrix.needsUpdate = true);
-  festCrowd.phones.instanceMatrix.needsUpdate = true; festCrowd.flashes.geometry.attributes.position.needsUpdate = true;
+  const C = festCrowd; C.phoneArms.instanceMatrix.needsUpdate = C.phones.instanceMatrix.needsUpdate = true;
+  if (C.phones.instanceColor) C.phones.instanceColor.needsUpdate = true;
+  C.flashes.geometry.attributes.position.needsUpdate = C.flashes.geometry.attributes.color.needsUpdate = true;
   // Lasers and beams: hit a position on the beat, hold, glide to land on the next beat
   const k = Math.floor(beat), fr = beat - k, e = easeIO(clamp((fr - 0.3) / 0.7, 0, 1));
   lasers.forEach(L => {
