@@ -6,6 +6,17 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v19 - 2026-11-03 - Phone layout: player on top, self-closing controls sheet; screen timing fix
+
+**Phones** (max-width 760px):
+
+- **Player:** moves to the top edge. The HUD (title, beat readout) sits under it at 76 px.
+- **Controls panel:** a bottom sheet that starts collapsed and never stays open. `setSheet` closes it 3 s after the last pointerdown, input, change, scroll or keydown inside it. Tapping the stage closes it at once.
+- **CSS order:** the phone player rule must come after the base `.player` rule (a later media block), otherwise the base `bottom` wins and the bar stretches.
+- **Desktop:** unchanged.
+
+**Screen timing:** stills and the camera feed are timed in bars, and a new song or a seek back restarts the bar count. Without a reset, a still stayed up until the new song reached the old bar number, which could span several songs. `updateScreen` now resets the timings when the bar count drops.
+
 ### v18 - 2026-11-03 - Performance: adaptive resolution, lighter crowd, screen skips hidden work
 
 **Problem:** the owner reported zooming on the main stage getting stuck. Profiling showed the JS per frame was small (festUpdate about 0.2 ms, arena about 0.3 ms). The load was on the GPU: about 514k triangles per frame, plus the LED screen's fractal shader running per pixel at Retina resolution.
