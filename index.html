@@ -1126,17 +1126,27 @@ const festCrowd = (() => {
       part(new THREE.SphereGeometry(0.105, 10, 8).scale(0.9, 1.12, 1), 0, 1.66))];                                // head
   // Hair, one instanced mesh per style, sitting on the head (the face is at -z): short, long down the back, a bun,
   // curly volume, a cap. About one in ten people are bald.
-  const cap = (r, th, sx = 0.92, sy = 1.12) => new THREE.SphereGeometry(r, 10, 6, 0, Math.PI * 2, 0, Math.PI * th).scale(sx, sy, 1.02).translate(0, 1.672, 0.006);
+  // Hair is tilted back on the head (high hairline at the front, low at the nape) so it reads as hair, not a cap
+  const cap = (r, th, sx = 0.92, sy = 1.12, tilt = 0.5) => new THREE.SphereGeometry(r, 12, 7, 0, Math.PI * 2, 0, Math.PI * th).rotateX(tilt).scale(sx, sy, 1.04).translate(0, 1.668, 0.01);
+  const curls = (() => { const g = new THREE.IcosahedronGeometry(0.135, 1), v = g.attributes.position; // lumpy volume
+    for (let i = 0; i < v.count; i++) { const k = 1 + 0.12 * Math.sin(v.getX(i) * 61 + v.getY(i) * 47 + v.getZ(i) * 53); v.setXYZ(i, v.getX(i) * k, v.getY(i) * k, v.getZ(i) * k); }
+    g.computeVertexNormals(); return g.scale(0.95, 0.95, 1).translate(0, 1.7, 0.02); })();
   const HAIR = {
-    short: [cap(0.112, 0.5)],
-    long: [cap(0.113, 0.56), new THREE.BoxGeometry(0.19, 0.3, 0.05).translate(0, 1.55, 0.075)],
-    bun: [cap(0.112, 0.52), new THREE.SphereGeometry(0.05, 8, 6).translate(0, 1.74, 0.1)],
-    curly: [cap(0.14, 0.6, 1, 1)],
-    beanie: [cap(0.118, 0.45, 0.95, 1.2)],
+    short: [cap(0.112, 0.55)],
+    side: [cap(0.114, 0.62, 0.95, 1.12, 0.35)],
+    long: [cap(0.114, 0.62), new THREE.CylinderGeometry(0.1, 0.13, 0.36, 10, 1, true, Math.PI * 0.6, Math.PI * 0.8).translate(0, 1.5, 0.0)],
+    ponytail: [cap(0.112, 0.58), new THREE.CylinderGeometry(0.03, 0.012, 0.28, 6).rotateX(0.35).translate(0, 1.57, 0.12)],
+    bun: [cap(0.112, 0.56), new THREE.SphereGeometry(0.05, 8, 6).translate(0, 1.74, 0.1)],
+    curly: [curls],
+    beanie: [cap(0.118, 0.45, 0.95, 1.2, 0.15)],
   };
+  const HAIR_W = ['short', 'short', 'short', 'side', 'side', 'long', 'long', 'ponytail', 'bun', 'curly', 'curly', 'beanie'];
   const SKIN = [0xf1c8a8, 0xe0ac85, 0xc68a5f, 0x9c6640, 0x6e452a, 0x4a2e1c];
-  const CLOTH = [0x15151a, 0xe8e8e8, 0x1f3a8a, 0xb01c2c, 0x2e7d32, 0xf2b705, 0x7b2d8b, 0x2aa8c4, 0xff6fa8, 0x6b4f3a, 0x8a8f98, 0xff8a1e];
-  const PANTS = [0x1a1d2e, 0x23324f, 0x101012, 0x4a4036, 0x6d6e72, 0x2f4f2f, 0x8a6b4a];
+  // Mostly what people really wear: black, white, grey, denim, muted tones; a few bright and neon pieces
+  const CLOTH = [0x111114, 0x111114, 0x111114, 0x111114, 0xe8e8e8, 0xe8e8e8, 0xe8e8e8, 0x6d7078, 0x9a9ca2, 0x1c2a4a, 0x1c2a4a, 0x46628a,
+    0x4a5233, 0x5a1a22, 0xc8b89a, 0x6b4f3a, 0xff4fa0, 0xf2e040, 0xff8a1e, 0x2ad0e0, 0x8aff40, 0x7b2d8b, 0xb01c2c];
+  const PANTS = [0x2c3e5e, 0x2c3e5e, 0x3a5274, 0x111114, 0x111114, 0x111114, 0x8a7a5a, 0x5c5e64, 0x4a5233, 0xd8d8d0];
+  const PRINT = [0xffffff, 0x111114, 0xff3a6a, 0xffd040, 0x30c0ff, 0xff8a1e, 0xb070ff];
   const HAIRC = [0x0e0b09, 0x0e0b09, 0x0e0b09, 0x2b1b10, 0x2b1b10, 0x2b1b10, 0x4a2f1b, 0x4a2f1b, 0x8a6a3e, 0xd8b878, 0xd8b878, 0x8e3b1f, 0xc04080, 0x3060d0]; // mostly natural
   const any = a => a[Math.floor(Math.random() * a.length)];
   const L = [-0.23, 1.44], R = [0.23, 1.44], PHONE_ARM = Math.PI - 0.15;
@@ -1155,8 +1165,14 @@ const festCrowd = (() => {
     const p = { x, z, mode, shape, base, yaw, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
       lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0, leanSpeed: 0.25 + Math.random() * 0.5,
       skin: new THREE.Color(any(SKIN)), top: new THREE.Color(any(CLOTH)), bottom: new THREE.Color(Math.random() < 0.15 ? any(CLOTH) : any(PANTS)),
-      short: Math.random() < 0.45, hair: Math.random() < 0.1 ? null : any(Object.keys(HAIR)), hairC: new THREE.Color(any(HAIRC)) };
+      hair: Math.random() < 0.06 ? null : any(HAIR_W), hairC: new THREE.Color(any(HAIRC)),
+      // top: 0 plain, 1 stripes, 2 print (front and back), 3 two-tone; crop top; bottom: 0 trousers, 1 shorts, 2 skirt
+      // or dress; sleeves: 0 long, 1 short, 2 none
+      topStyle: any([0, 0, 0, 0, 1, 1, 2, 2, 2, 3]), crop: Math.random() < 0.1, botStyle: any([0, 0, 0, 0, 0, 1, 1, 2, 2]), sleeves: any([0, 0, 1, 1, 1, 2]),
+      acc: new THREE.Color(any(PRINT)) };
     if (p.hair === 'beanie') p.hairC.set(any(CLOTH));
+    if (p.botStyle === 2 && Math.random() < 0.5) p.bottom.copy(p.top);                    // a dress
+    if (p.topStyle === 3 || p.topStyle === 1) p.acc.set(any(CLOTH));
     return p;
   };
   for (let tries = 0; people.length < CROWD_N && tries < CROWD_N * 40; tries++) {
@@ -1168,36 +1184,47 @@ const festCrowd = (() => {
     const shape = Math.random() < 0.03 ? 'phone' : q < 0.015 ? 'open' : q < 0.03 ? 'fists' : q < 0.12 ? (Math.random() < 0.5 ? 'fist' : 'open') + (Math.random() < 0.5 ? 'L' : 'R') : 'down';
     people.push(makePerson(x, z, mode, shape, (Math.random() * 2 - 1) * 0.45, FEST_GROUND));
   }
-  // On stage, facing the crowd: the DJ behind the decks on the riser, guests in the back corners moving to the music,
-  // and a crew member at each monitor desk at the front corners, mostly still. All clear of the dancers and their
-  // walks in from the wings.
+  // On stage, facing the crowd: the DJ behind the decks on the riser, and a crew member at each monitor desk at the
+  // front corners. Clear of the dancers and their walks in from the wings.
   people.push(makePerson(0, FEST_DJ.z - 0.65, 1, 'down', Math.PI, FEST_DJ.top));
-  for (const side of [-1, 1]) {
-    for (let n = 0, tries = 0; n < 7 && tries < 200; tries++) {
-      const x = side * (8.6 + Math.random() * 3.8), z = -11.4 + Math.random() * 1.9;
-      if (people.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 0.6 * 0.6)) continue;
-      people.push(makePerson(x, z, Math.random() < 0.6 ? 1 : 2, Math.random() < 0.2 ? (Math.random() < 0.5 ? 'fist' : 'open') + (side < 0 ? 'R' : 'L') : 'down',
-        Math.PI + (Math.random() * 2 - 1) * 0.5, FEST_DECK_TOP));
-      n++;
-    }
-    people.push(makePerson(side * 12.3, 2.0, 0, 'down', Math.PI + side * 1.1, FEST_DECK_TOP));
-  }
+  for (const side of [-1, 1]) people.push(makePerson(side * 12.3, 2.0, 0, 'down', Math.PI + side * 1.1, FEST_DECK_TOP));
   // The crowd is in the dark, lit by the stage: colours are kept deep so they read as people, not as glowing toys.
-  const DIM = 0.42;
+  const DIM = 0.22;
   const crowdMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  // Outfits are painted per fragment from the body part, the point on the body (object space; the face is at -z) and
+  // the person's style: stripes, a print front and back, two-tone, a bare midriff, a waistband, shorts and skirt hems,
+  // short sleeves or none. aStyle: top style, crop, bottom style, sleeves (+10 on the phone arm, built at the shoulder).
   crowdMat.onBeforeCompile = sh => {
-    sh.vertexShader = 'attribute float part; attribute vec3 aSkin, aTop, aBot, aArm; varying vec3 vPartC;\n' +
-      sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vPartC = part < 0.5 ? aSkin : part < 1.5 ? aTop : part < 2.5 ? aBot : aArm;');
-    sh.fragmentShader = 'varying vec3 vPartC;\n' + sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse * vPartC, opacity );');
+    sh.vertexShader = 'attribute float part; attribute vec3 aSkin, aTop, aBot, aAcc; attribute vec4 aStyle;\nvarying vec3 vSkin, vTop, vBot, vAcc, vObj; varying vec4 vStyle; varying float vPart;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vSkin = aSkin; vTop = aTop; vBot = aBot; vAcc = aAcc; vStyle = aStyle; vPart = part; vObj = position;');
+    sh.fragmentShader = 'varying vec3 vSkin, vTop, vBot, vAcc, vObj; varying vec4 vStyle; varying float vPart;\n' + sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+      vec3 pc = vSkin; float y = vObj.y;
+      if (vPart > 0.5 && vPart < 1.5) {                                    // top
+        pc = vTop;
+        if (vStyle.x > 0.5 && vStyle.x < 1.5) pc = mix(vTop, vAcc, step(0.5, fract(y * 8.0)));
+        else if (vStyle.x > 1.5 && vStyle.x < 2.5 && length(vec2(vObj.x, (y - 1.24) * 1.2)) < 0.085) pc = vAcc;
+        else if (vStyle.x > 2.5 && abs(vObj.x) > 0.12) pc = vAcc;
+        if (vStyle.y > 0.5 && y > 0.93 && y < 1.08) pc = vSkin;              // crop top
+        if (y < 0.93) pc = vBot;                                           // waistband
+      } else if (vPart > 1.5 && vPart < 2.5) {                             // legs
+        pc = vBot;
+        if (vStyle.z > 0.5 && y < (vStyle.z > 1.5 ? 0.42 : 0.55)) pc = vSkin; // shorts / skirt hem
+      } else if (vPart > 2.5) {                                            // arms: sleeves
+        vec2 sh = vStyle.w > 9.5 ? vec2(0.0) : vec2(sign(vObj.x) * 0.23, 1.44);
+        float sl = mod(vStyle.w, 10.0), d = length(vObj.xy - sh);
+        pc = sl < 0.5 ? vTop : (sl < 1.5 && d < 0.22 ? vTop : vSkin);
+      }
+      vec4 diffuseColor = vec4( diffuse * pc, opacity );`);
   };
-  const dress = (geo, list) => {
-    const at = k => new Float32Array(Math.max(1, list.length) * 3);
-    const A = { aSkin: at(), aTop: at(), aBot: at(), aArm: at() };
+  const dress = (geo, list, phoneArm = false) => {
+    const n = Math.max(1, list.length), at = () => new Float32Array(n * 3), st = new Float32Array(n * 4);
+    const A = { aSkin: at(), aTop: at(), aBot: at(), aAcc: at() };
     list.forEach((p, i) => {
-      p.skin.clone().multiplyScalar(DIM).toArray(A.aSkin, i * 3); p.top.clone().multiplyScalar(DIM).toArray(A.aTop, i * 3);
-      p.bottom.clone().multiplyScalar(DIM).toArray(A.aBot, i * 3); (p.short ? p.skin : p.top).clone().multiplyScalar(DIM).toArray(A.aArm, i * 3);
+      [[p.skin, 'aSkin'], [p.top, 'aTop'], [p.bottom, 'aBot'], [p.acc, 'aAcc']].forEach(([c, k]) => c.clone().multiplyScalar(DIM).toArray(A[k], i * 3));
+      st.set([p.topStyle, p.crop ? 1 : 0, p.botStyle, p.sleeves + (phoneArm ? 10 : 0)], i * 4);
     });
     Object.entries(A).forEach(([k, v]) => geo.setAttribute(k, new THREE.InstancedBufferAttribute(v, 3)));
+    geo.setAttribute('aStyle', new THREE.InstancedBufferAttribute(st, 4));
     return geo;
   };
   const meshes = Object.entries(shapes).map(([name, arms]) => {
@@ -1229,7 +1256,7 @@ const festCrowd = (() => {
       local: new THREE.Matrix4().makeTranslation(0, -ARM - 0.075, -0.035).multiply(new THREE.Matrix4().makeRotationZ(land ? Math.PI / 2 : 0))
         .multiply(new THREE.Matrix4().makeScale(sc, sc * (0.9 + Math.random() * 0.2), 1)) };
   });
-  const phoneArms = new THREE.InstancedMesh(dress(mergeGeometries(arm(0, 0, 0, fist())), holders), crowdMat, nH);
+  const phoneArms = new THREE.InstancedMesh(dress(mergeGeometries(arm(0, 0, 0, fist())), holders, true), crowdMat, nH);
   const phones = new THREE.InstancedMesh(new THREE.BoxGeometry(0.072, 0.15, 0.01), new THREE.MeshBasicMaterial({ color: 0xffffff }), nH);
   [phoneArms, phones].forEach(m => { m.count = holders.length; m.frustumCulled = false; festG.add(m); });
   holders.forEach((p, k) => phones.setColorAt(k, c.setRGB(0, 0, 0)));
