@@ -3525,11 +3525,11 @@ function frameCamera(dt) {
   camera.position.copy(controls.target).add(camOff.setFromSpherical(sph));
 }
 
-// However far you orbit or zoom out, the camera stays above the floor and, indoors, inside the side and back walls.
+// However far you orbit or zoom out, the camera stays above the floor and, in the studio, inside the side and back walls.
 // (The lowest viewing angle, maxPolarAngle, stays as tuned; at long range it would otherwise dip under the floor.)
 function keepCamera() {
   const p = camera.position;
-  if (envName === 'studio' || envName === 'club') { p.x = clamp(p.x, -ROOM.side + 0.4, ROOM.side - 0.4); p.z = Math.max(p.z, ROOM.back + 0.4); }
+  if (envName === 'studio') { p.x = clamp(p.x, -ROOM.side + 0.4, ROOM.side - 0.4); p.z = Math.max(p.z, ROOM.back + 0.4); }
   p.y = Math.max(p.y, 0.35);
 }
 
