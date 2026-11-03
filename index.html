@@ -2709,7 +2709,7 @@ async function loadLibrary(groups, label) {
   const walks = fbx(groups.walk), crowd = fbx(groups.crowd), allDances = fbx(groups.dance), chars = fbx(groups.avatar);
   const total = walks.length + crowd.length + allDances.length + chars.length + (groups.song || []).length + (groups.wall || []).length;
   if (!total) { setLib(`No files found in avatars/, dances/ or songs/ inside ${label}.`, true); return; }
-  if (groups.song?.length) addSongFiles(groups.song.filter(isAudio), false);
+  if (groups.song?.length) addSongFiles(shuffle(groups.song.filter(isAudio)), false); // a different running order each load
   // From the web, only the first song downloads now; each next one downloads while the current one plays.
   songs[0]?.file?.load?.().catch(() => {});
   const imgs = (groups.wall || []).filter(f => /\.(jpe?g|png|webp|avif|gif)$/i.test(f.name));
