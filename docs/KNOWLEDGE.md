@@ -6,6 +6,17 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v23 - 2026-11-03 - Studio side walls also use other shapes that crop well
+
+**Problem:** 106 of 157 wall images never appeared. 48 are 3:2, 14 are 16:9 and 13 square; the side-wall pool only took 8:3 once there were two of them, and the back wall only takes 3:1 and wider.
+
+**Change (owner's choice):** the left wall picks from the 33 non-8:3 images that crop well about 35% of the time.
+
+- **Crops well:** one face, fitting whole in the full-width strip, at 1000 px or more.
+- **Otherwise:** an 8:3 image.
+- **Right wall:** the closest colour match from 8:3 plus the good crops.
+- **Back wall:** unchanged (3:1+), still colour-matched.
+
 ### v22 - 2026-11-03 - Studio back wall the right way round
 
 **Change:** the back wall's image is no longer pre-flipped. It reads correctly on the wall, and the mirror shows its true, reversed reflection, as a real mirror does. This is the owner's call and replaces the old "flip so the mirror reads correctly" rule. Images with text will now read backwards in the mirror, as in real life.

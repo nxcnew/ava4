@@ -3016,11 +3016,15 @@ async function randomWalls(imgs) {
   const single = sides.filter(k => faces(k).length === 1 && faceWindow(faces(k), vis(k)).fits);
   const sharp = single.filter(k => k.px >= 1000);
   const fitting = sides.filter(k => faces(k).length && faceWindow(k.faces, vis(k)).fits);
+  // The 8:3 images are favoured (about two loads in three); otherwise any other shape where one face fits the strip
+  // whole and the image is sharp enough, so the 3:2, 16:9 and square images get their turn too.
+  const crops = sharp.filter(k => !shaped.includes(k));
   const pool = [shaped, sharp, single, fitting, sides, looks.filter(k => !backs.includes(k)), looks].find(p => p.length >= 2) || looks;
-  const left = pick(pool);
+  const both = pool === shaped ? [...shaped, ...crops] : pool;
+  const left = pool === shaped && crops.length && Math.random() < 0.35 ? pick(crops) : pick(pool);
   // All three walls share a colour: the right wall and the back wall are the closest matches to the left one.
   const closest = (list, to) => list.length ? list.reduce((p, q) => lookDist(q, to) < lookDist(p, to) ? q : p) : to;
-  const right = closest(pool.filter(k => k !== left), left);
+  const right = closest(both.filter(k => k !== left), left);
   const back = closest(backs.filter(k => k !== left && k !== right), left);
   setWallpaper(left.f, 0); setWallpaper(right.f, 1); setWallpaper(back.f, 2);
 }
