@@ -6,6 +6,25 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v21 - 2026-11-03 - Stage show: wider spacing, running on and off, next lineup cues up; natural-colour camera feed
+
+**Spacing:** `ENVS.festival.spread = 2.1`. `stageSlots` scales the layout by the scene's spread; switching scenes relays the stage out.
+
+**Running:**
+
+- **When:** on the main stage (`stageRun()`), moves over 3 m are runs at 3.2 m/s.
+- **Clip:** `walkState(plainOnly, run)` uses a clip named run/jog/sprint from walks/ if there is one. If not, the plain walk plays 1.9x faster (`st.rate`).
+- **To do:** the owner should add a Mixamo "Running" (in place) as `walks/walk - Running.fbx`.
+
+**Cue-up (`cueNextLineup`, run every frame):**
+
+- **When:** about 9 s before a song ends (`songBuf.duration` minus the play position), the next lineup is picked (`pickLineup`, the same rules as before).
+- **Waiting spots:** newcomers (`av.cued`) jog from the wings to spots beside the dance area on their own side, x +-6.8..8.6, z -1.4.., and wait there facing the stage, visible.
+- **Change-over:** `rotateStage` uses the cued lineup. Newcomers run to their spots; the outgoing run all the way back to the wings.
+- **Reset:** `clearStage` and scene switches reset any cue.
+
+**Camera feed:** dancers always appear in their natural colours. Neon silhouettes and the tinted triptych sides were dropped. Over art, a little of the art's colour spills onto them (15%).
+
 ### v20 - 2026-11-03 - One collapse/expand everywhere; pin for desktop; touch player fades
 
 **Collapse / expand**, the same on every device:
