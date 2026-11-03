@@ -1063,26 +1063,27 @@ for (const side of [-1, 1]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(8
 // camera at the stage front films the dancers and the big screen shows the feed. It renders only while shown, small,
 // every other frame.
 let festArt = [];
-const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0, fx: 0, camFx: 0, layered: false };
+const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0, fx: 0, camFx: 0, layered: false, retryAt: 0 };
 const bcTarget = new THREE.WebGLRenderTarget(512, 196, { samples: 0 });
 const bcCam = new THREE.PerspectiveCamera(24, 512 / 196, 0.1, 80), bcClear = new THREE.Color(); bcCam.layers.set(5);
 function nextArt() {
-  if (!festArt.length || screenShow.nextFor) return;
+  if (!festArt.length || screenShow.nextFor || performance.now() < screenShow.retryAt) return;
   const f = festArt[Math.floor(Math.random() * festArt.length)]; screenShow.nextFor = f;
   (f.load ? f.load() : Promise.resolve(f)).then(b => createImageBitmap(b, { imageOrientation: 'flipY' })).then(bmp => {
     const t = new THREE.Texture(bmp); t.flipY = false; t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
     t.anisotropy = 4; t.needsUpdate = true; t.userData.aspect = bmp.width / bmp.height;
     if (screenShow.next) screenShow.next.dispose();
     screenShow.next = t;
-  }).catch(() => {}).finally(() => { screenShow.nextFor = null; });
+  }).catch(() => { festArt = festArt.filter(x => x !== f); screenShow.retryAt = performance.now() + 5000; }) // skip a broken image, pause a moment
+    .finally(() => { screenShow.nextFor = null; });
 }
 function updateScreen(beat, bar, dt, t) {
   const S = screenShow, u = festScreenMat.uniforms;
   if (bar !== S.bar && mod(bar, 8) === 0 && musicOn()) {
     S.bar = bar;
     if (S.camTo && bar >= S.camUntil) S.camTo = 0;
-    // The camera: rarely (about one phrase in ten, two minutes apart at least), only with dancers on stage
-    if (!S.camTo && stageSet.size && t - S.lastCam > 60 && Math.random() < 0.2) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; S.camFx = Math.floor(Math.random() * 4); }
+    // The camera: now and then (about one phrase in seven, 90 s apart at least), only with dancers on stage
+    if (!S.camTo && stageSet.size && t - S.lastCam > 90 && Math.random() < 0.14) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; S.camFx = Math.floor(Math.random() * 4); }
     // Art: 8 or 16 bars of a still, then 8-16 bars of the generative looks; the next still loads in the meantime
     if (S.artTo && bar >= S.until) { S.artTo = 0; S.until = bar + (Math.random() < 0.5 ? 8 : 16); nextArt(); }
     else if (!S.artTo && bar >= S.until && S.next) {
