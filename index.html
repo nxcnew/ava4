@@ -916,7 +916,7 @@ const sparkles = (() => {
 
 /* --- Festival main stage: a performance stage, crowd in front, LED wall with generative art, speakers, lasers, beams,
        strobes, flame jets and fireworks. Everything decorative is cheap: basic additive materials and one instanced crowd. --- */
-const FEST_DECK_TOP = -0.04, FEST_GROUND = -1.6, FRONT_Z = 4.45; // FRONT_Z: the row of monitors and pyro along the stage's front edge
+const FEST_DECK_TOP = -0.04, FEST_GROUND = -1.6, FRONT_Z = 4.45, FEST_DJ = { z: -8.5, top: 0.56 }; // FRONT_Z: the row of monitors and pyro along the stage's front edge
 const festStrips = []; // LED edges that change colour with the music
 // Each page load dresses the main stage differently, like the studio's wallpapers: one random theme sets the
 // structure's finish, the deck, the light colours and the show palette (screens, LED edges, beams, lasers, fireworks).
@@ -1076,6 +1076,15 @@ const festCrowd = (() => {
     phone: [downL()],  // the phone arm is its own mesh so it can lift the phone when the music starts
   };
   const people = [], c = new THREE.Color();
+  // base: the floor they stand on; yaw 0 faces the stage
+  const makePerson = (x, z, mode, shape, yaw, base) => {
+    const p = { x, z, mode, shape, base, yaw, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
+      lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0, leanSpeed: 0.25 + Math.random() * 0.5,
+      skin: new THREE.Color(any(SKIN)), top: new THREE.Color(any(CLOTH)), bottom: new THREE.Color(Math.random() < 0.15 ? any(CLOTH) : any(PANTS)),
+      short: Math.random() < 0.45, hair: Math.random() < 0.1 ? null : any(Object.keys(HAIR)), hairC: new THREE.Color(any(HAIRC)) };
+    if (p.hair === 'beanie') p.hairC.set(any(CLOTH));
+    return p;
+  };
   for (let tries = 0; people.length < CROWD_N && tries < CROWD_N * 40; tries++) {
     const z = 7 + Math.pow(Math.random(), 0.9) * 6.5, spread = 12 + (z - 7) * 1.2, x = (Math.random() * 2 - 1) * spread;
     if (people.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 0.55 * 0.55)) continue;
@@ -1083,13 +1092,21 @@ const festCrowd = (() => {
     const r = Math.random(), mode = r < 0.62 ? 0 : r < 0.86 ? 1 : 2, q = Math.random() / (mode === 1 ? 1 : 0.25);
     // Mostly one hand up (left or right), a few both
     const shape = Math.random() < 0.03 ? 'phone' : q < 0.015 ? 'open' : q < 0.03 ? 'fists' : q < 0.12 ? (Math.random() < 0.5 ? 'fist' : 'open') + (Math.random() < 0.5 ? 'L' : 'R') : 'down';
-    people.push({ x, z, mode, shape, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
-      yaw: (Math.random() * 2 - 1) * 0.45, lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0,
-      leanSpeed: 0.25 + Math.random() * 0.5,
-      skin: new THREE.Color(any(SKIN)), top: new THREE.Color(any(CLOTH)), bottom: new THREE.Color(Math.random() < 0.15 ? any(CLOTH) : any(PANTS)),
-      short: Math.random() < 0.45, hair: Math.random() < 0.1 ? null : any(Object.keys(HAIR)), hairC: new THREE.Color(any(HAIRC)) });
-    const p = people[people.length - 1];
-    if (p.hair === 'beanie') p.hairC.set(any(CLOTH));
+    people.push(makePerson(x, z, mode, shape, (Math.random() * 2 - 1) * 0.45, FEST_GROUND));
+  }
+  // On stage, facing the crowd: the DJ behind the decks on the riser, guests in the back corners moving to the music,
+  // and a crew member at each monitor desk at the front corners, mostly still. All clear of the dancers and their
+  // walks in from the wings.
+  people.push(makePerson(0, FEST_DJ.z - 0.65, 1, 'down', Math.PI, FEST_DJ.top));
+  for (const side of [-1, 1]) {
+    for (let n = 0, tries = 0; n < 7 && tries < 200; tries++) {
+      const x = side * (8.6 + Math.random() * 3.8), z = -11.4 + Math.random() * 1.9;
+      if (people.some(p => (p.x - x) ** 2 + (p.z - z) ** 2 < 0.6 * 0.6)) continue;
+      people.push(makePerson(x, z, Math.random() < 0.6 ? 1 : 2, Math.random() < 0.2 ? (Math.random() < 0.5 ? 'fist' : 'open') + (side < 0 ? 'R' : 'L') : 'down',
+        Math.PI + (Math.random() * 2 - 1) * 0.5, FEST_DECK_TOP));
+      n++;
+    }
+    people.push(makePerson(side * 12.3, 2.0, 0, 'down', Math.PI + side * 1.1, FEST_DECK_TOP));
   }
   // The crowd is in the dark, lit by the stage: colours are kept deep so they read as people, not as glowing toys.
   const DIM = 0.42;
@@ -1257,6 +1274,53 @@ const FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10
     festG.add(im);
   });
 })();
+// Busy stage, all cheap and mostly instanced: the DJ booth on a riser at the back (LED face, decks, mixer, laptop),
+// flight cases stacked behind, truss legs, mic stands, a camera on a tripod, monitor desks at the front corners.
+(() => {
+  const cases = new THREE.MeshStandardMaterial({ color: 0x1b1b21, roughness: 0.45, metalness: 0.55 });
+  const glowM = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
+  const add = (geo, mat, x, y, z, ry = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; festG.add(m); return m; };
+  // DJ riser and booth (the booth's front edge at FEST_DJ.z faces the crowd)
+  add(new THREE.BoxGeometry(5.4, FEST_DJ.top - FEST_DECK_TOP, 2.8), festDark, 0, (FEST_DJ.top + FEST_DECK_TOP) / 2, FEST_DJ.z - 1.1);
+  festStrip(new THREE.BoxGeometry(5.42, 0.07, 0.05), [0, FEST_DJ.top, FEST_DJ.z + 0.31], null, 1);
+  add(new THREE.BoxGeometry(2.9, 1.0, 0.75), cases, 0, FEST_DJ.top + 0.5, FEST_DJ.z - 0.1);
+  festStrip(new THREE.PlaneGeometry(2.8, 0.86), [0, FEST_DJ.top + 0.5, FEST_DJ.z + 0.28], null, 2);
+  for (const x of [-0.75, 0.75]) add(new THREE.BoxGeometry(0.5, 0.07, 0.42), cases, x, FEST_DJ.top + 1.03, FEST_DJ.z - 0.15);   // decks
+  add(new THREE.BoxGeometry(0.38, 0.08, 0.42), cases, 0, FEST_DJ.top + 1.04, FEST_DJ.z - 0.15);                                // mixer
+  const lap = add(new THREE.PlaneGeometry(0.34, 0.22), glowM(0x7088ff), 1.25, FEST_DJ.top + 1.15, FEST_DJ.z - 0.3, Math.PI);      // laptop screen
+  lap.rotation.x = 0.25;
+  // Flight cases, stacked in the back corners
+  const boxes = [];
+  for (const side of [-1, 1]) for (let i = 0; i < 6; i++) {
+    const w = 0.7 + Math.random() * 0.7, h = 0.5 + Math.random() * 0.5, d = 0.6 + Math.random() * 0.4;
+    const x = side * (4.4 + (i % 3) * 1.25), z = -11.6 + Math.floor(i / 3) * 1.1;
+    boxes.push([x, h / 2 + FEST_DECK_TOP, z, w, h, d]);
+    if (Math.random() < 0.5) { const h2 = 0.4 + Math.random() * 0.4; boxes.push([x + (Math.random() - 0.5) * 0.2, h + h2 / 2 + FEST_DECK_TOP, z, w * 0.85, h2, d * 0.9]); }
+  }
+  const caseMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), cases, boxes.length), M = new THREE.Matrix4();
+  boxes.forEach(([x, y, z, w, h, d], i) => caseMesh.setMatrixAt(i, M.makeRotationY((Math.random() - 0.5) * 0.2).scale(new THREE.Vector3(w, h, d)).setPosition(x, y, z)));
+  festG.add(caseMesh);
+  // Truss legs under the front and back trusses
+  const legs = new THREE.InstancedMesh(new THREE.BoxGeometry(0.36, 10.5 - FEST_DECK_TOP, 0.36), festDark, 4);
+  [[-13.2, 3.2], [13.2, 3.2], [-13.2, -7], [13.2, -7]].forEach(([x, z], i) => legs.setMatrixAt(i, M.makeTranslation(x, (10.5 + FEST_DECK_TOP) / 2, z)));
+  festG.add(legs);
+  // Mic stands (base, pole, boom, mic) near the front
+  const mic = mergeGeometries([new THREE.CylinderGeometry(0.15, 0.16, 0.02, 12).translate(0, 0.01, 0), new THREE.CylinderGeometry(0.012, 0.012, 1.45, 6).translate(0, 0.73, 0),
+    new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6).rotateX(-1.0).translate(0, 1.62, 0.21), new THREE.CylinderGeometry(0.022, 0.018, 0.12, 8).rotateX(-1.0).translate(0, 1.76, 0.42)]);
+  const mics = new THREE.InstancedMesh(mic, cases, 2);
+  [-4.6, 4.6].forEach((x, i) => mics.setMatrixAt(i, M.makeRotationY(-Math.sign(x) * 0.3).setPosition(x, FEST_DECK_TOP, 3.3)));
+  festG.add(mics);
+  // Camera on a tripod at the front left, filming the dancers
+  const cam = mergeGeometries([...[0, 1, 2].map(k => new THREE.CylinderGeometry(0.015, 0.015, 1.5, 5).translate(0, 0.72, 0).rotateZ(0.22).rotateY(k * Math.PI * 2 / 3)),
+    new THREE.BoxGeometry(0.22, 0.24, 0.5).translate(0, 1.55, 0), new THREE.CylinderGeometry(0.07, 0.08, 0.2, 10).rotateX(Math.PI / 2).translate(0, 1.55, -0.33)]);
+  add(cam, cases, -10.4, FEST_DECK_TOP, 3.0, Math.PI - 0.55);
+  // Monitor desks at the front corners, each with a lit screen facing its engineer
+  for (const side of [-1, 1]) {
+    add(new THREE.BoxGeometry(1.2, 0.9, 0.65), cases, side * 12.8, FEST_DECK_TOP + 0.45, 2.75, side * 0.3);
+    const scr = add(new THREE.PlaneGeometry(0.5, 0.3), glowM(0x4a6aa0), side * 12.75, FEST_DECK_TOP + 1.05, 2.55, Math.PI + side * 0.3);
+    scr.rotation.x = -0.4;
+  }
+})();
 // Flames: a billboard per machine with a turbulent fire shader (white-hot core, yellow, orange, smoky red edges, a blue
 // root at the nozzle). A burst shoots up in a fraction of a second, burns, then the valve shuts: the fireball lifts
 // off the nozzle and burns out.
@@ -1394,7 +1458,7 @@ function festUpdate(beat, pulse, dt, t) {
   // and back, each their own way and pace. Calmer in quiet passages, all still with no music.
   for (const p of festCrowd.people) {
     const f = mod(beat + p.ph, 1);
-    const y = FEST_GROUND + (p.mode === 1 ? Math.pow(Math.max(0, Math.sin(Math.PI * f)), 1.6) * 0.1 * energy : 0);
+    const y = p.base + (p.mode === 1 ? Math.pow(Math.max(0, Math.sin(Math.PI * f)), 1.6) * 0.1 * energy : 0);
     const sway = p.mode === 2 ? Math.sin((beat + p.ph * 4) * Math.PI) * 0.1 * energy : 0;
     const a = p.lean * (0.5 + 0.5 * Math.sin((beat * p.leanSpeed + p.ph * 8) * Math.PI)) * energy; // lean from the feet
     crowdQ.setFromEuler(crowdE.set(0, p.yaw, a));
