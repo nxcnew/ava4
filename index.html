@@ -1021,22 +1021,40 @@ const festFlameLight = new THREE.PointLight(0xff8030, 0, 30, 1.3); festFlameLigh
 const CROWD_N = 420;
 const festCrowd = (() => {
   const part = (g, x, y, rz = 0, sx = 1, sz = 1) => g.scale(sx, 1, sz).rotateZ(rz).translate(x, y, 0);
+  // Every vertex is tagged with the body part it belongs to (0 skin, 1 top, 2 trousers, 3 sleeves), and each person
+  // carries their own colour per part (see crowdMat), so clothes vary without extra meshes or draw calls.
+  const tag = (k, ...gs) => gs.map(g => { g.setAttribute('part', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(k), 1)); return g; });
   // Hands are built hanging down from the wrist at the origin, then turned to carry on from the arm.
-  const fist = () => [new THREE.SphereGeometry(0.046, 8, 6).scale(1, 1.1, 0.85).translate(0, -0.045, 0)];
-  const open = thumb => [new THREE.BoxGeometry(0.085, 0.095, 0.025).translate(0, -0.05, 0),
+  const fist = () => tag(0, new THREE.SphereGeometry(0.046, 8, 6).scale(1, 1.1, 0.85).translate(0, -0.045, 0));
+  const open = thumb => tag(0, new THREE.BoxGeometry(0.085, 0.095, 0.025).translate(0, -0.05, 0),
     ...[-0.03, -0.01, 0.01, 0.03].map((fx, k) => new THREE.CylinderGeometry(0.01, 0.009, 0.075, 5).translate(0, -0.0375, 0)
       .rotateZ((k - 1.5) * 0.12).translate(fx, -0.095, 0)),
-    new THREE.CylinderGeometry(0.011, 0.01, 0.06, 5).translate(0, -0.03, 0).rotateZ(0.8 * thumb).translate(0.04 * thumb, -0.03, 0)];
+    new THREE.CylinderGeometry(0.011, 0.01, 0.06, 5).translate(0, -0.03, 0).rotateZ(0.8 * thumb).translate(0.04 * thumb, -0.03, 0));
   // An arm from the shoulder at (x0, y0), at angle `ang` from straight down, with a hand on the end
   const ARM = 0.64, tip = (x0, y0, ang) => [x0 + Math.sin(ang) * ARM, y0 - Math.cos(ang) * ARM];
-  const arm = (x0, y0, ang, hand) => [part(new THREE.CylinderGeometry(0.05, 0.04, ARM, 7), x0 + Math.sin(ang) * ARM / 2, y0 - Math.cos(ang) * ARM / 2, ang),
+  const arm = (x0, y0, ang, hand) => [...tag(3, part(new THREE.CylinderGeometry(0.05, 0.04, ARM, 7), x0 + Math.sin(ang) * ARM / 2, y0 - Math.cos(ang) * ARM / 2, ang)),
     ...hand.map(g => g.rotateZ(ang).translate(...tip(x0, y0, ang), 0))];
   const body = () => [
-    part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), -0.09, 0.43), part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), 0.09, 0.43),
-    part(new THREE.CylinderGeometry(0.2, 0.16, 0.6, 10), 0, 1.15, 0, 1, 0.6),                                   // torso, wider at the shoulders
-    part(new THREE.CapsuleGeometry(0.075, 0.3, 2, 8), 0, 1.42, Math.PI / 2, 1, 0.8),                             // shoulders
-    part(new THREE.CylinderGeometry(0.05, 0.055, 0.12, 7), 0, 1.52),                                             // neck
-    part(new THREE.SphereGeometry(0.105, 10, 8).scale(0.9, 1.12, 1), 0, 1.66)];                                     // head
+    ...tag(2, part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), -0.09, 0.43), part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), 0.09, 0.43)),
+    ...tag(1, part(new THREE.CylinderGeometry(0.2, 0.16, 0.6, 10), 0, 1.15, 0, 1, 0.6),                         // torso, wider at the shoulders
+      part(new THREE.CapsuleGeometry(0.075, 0.3, 2, 8), 0, 1.42, Math.PI / 2, 1, 0.8)),                          // shoulders
+    ...tag(0, part(new THREE.CylinderGeometry(0.05, 0.055, 0.12, 7), 0, 1.52),                                   // neck
+      part(new THREE.SphereGeometry(0.105, 10, 8).scale(0.9, 1.12, 1), 0, 1.66))];                                // head
+  // Hair, one instanced mesh per style, sitting on the head (the face is at -z): short, long down the back, a bun,
+  // curly volume, a cap. About one in ten people are bald.
+  const cap = (r, th, sx = 0.92, sy = 1.12) => new THREE.SphereGeometry(r, 10, 6, 0, Math.PI * 2, 0, Math.PI * th).scale(sx, sy, 1.02).translate(0, 1.672, 0.006);
+  const HAIR = {
+    short: [cap(0.112, 0.5)],
+    long: [cap(0.113, 0.56), new THREE.BoxGeometry(0.19, 0.3, 0.05).translate(0, 1.55, 0.075)],
+    bun: [cap(0.112, 0.52), new THREE.SphereGeometry(0.05, 8, 6).translate(0, 1.74, 0.1)],
+    curly: [cap(0.14, 0.6, 1, 1)],
+    beanie: [cap(0.118, 0.45, 0.95, 1.2)],
+  };
+  const SKIN = [0xf1c8a8, 0xe0ac85, 0xc68a5f, 0x9c6640, 0x6e452a, 0x4a2e1c];
+  const CLOTH = [0x15151a, 0xe8e8e8, 0x1f3a8a, 0xb01c2c, 0x2e7d32, 0xf2b705, 0x7b2d8b, 0x2aa8c4, 0xff6fa8, 0x6b4f3a, 0x8a8f98, 0xff8a1e];
+  const PANTS = [0x1a1d2e, 0x23324f, 0x101012, 0x4a4036, 0x6d6e72, 0x2f4f2f, 0x8a6b4a];
+  const HAIRC = [0x0e0b09, 0x2b1b10, 0x4a2f1b, 0x8a6a3e, 0xd8b878, 0x8e3b1f, 0xc04080, 0x3060d0];
+  const any = a => a[Math.floor(Math.random() * a.length)];
   const L = [-0.23, 1.44], R = [0.23, 1.44], UP = Math.PI - 0.4, PHONE_ARM = Math.PI - 0.15;
   const downL = () => arm(...L, -0.07, fist()), downR = () => arm(...R, 0.07, fist());
   const shapes = {
@@ -1056,13 +1074,44 @@ const festCrowd = (() => {
     const shape = Math.random() < 0.03 ? 'phone' : q < 0.04 ? 'open' : q < 0.07 ? 'fists' : q < 0.13 ? (Math.random() < 0.5 ? 'oneFist' : 'oneOpen') : 'down';
     people.push({ x, z, mode, shape, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
       yaw: (Math.random() * 2 - 1) * 0.45, lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0,
-      leanSpeed: 0.25 + Math.random() * 0.5, hue: 0.72 + Math.random() * 0.1, l: 0.03 + Math.random() * 0.05 });
+      leanSpeed: 0.25 + Math.random() * 0.5,
+      skin: new THREE.Color(any(SKIN)), top: new THREE.Color(any(CLOTH)), bottom: new THREE.Color(Math.random() < 0.15 ? any(CLOTH) : any(PANTS)),
+      short: Math.random() < 0.45, hair: Math.random() < 0.1 ? null : any(Object.keys(HAIR)), hairC: new THREE.Color(any(HAIRC)) });
+    const p = people[people.length - 1];
+    if (p.hair === 'beanie') p.hairC.set(any(CLOTH));
   }
+  // The crowd is in the dark, lit by the stage: colours are kept deep so they read as people, not as glowing toys.
+  const DIM = 0.42;
+  const crowdMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  crowdMat.onBeforeCompile = sh => {
+    sh.vertexShader = 'attribute float part; attribute vec3 aSkin, aTop, aBot, aArm; varying vec3 vPartC;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vPartC = part < 0.5 ? aSkin : part < 1.5 ? aTop : part < 2.5 ? aBot : aArm;');
+    sh.fragmentShader = 'varying vec3 vPartC;\n' + sh.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse * vPartC, opacity );');
+  };
+  const dress = (geo, list) => {
+    const at = k => new Float32Array(Math.max(1, list.length) * 3);
+    const A = { aSkin: at(), aTop: at(), aBot: at(), aArm: at() };
+    list.forEach((p, i) => {
+      p.skin.clone().multiplyScalar(DIM).toArray(A.aSkin, i * 3); p.top.clone().multiplyScalar(DIM).toArray(A.aTop, i * 3);
+      p.bottom.clone().multiplyScalar(DIM).toArray(A.aBot, i * 3); (p.short ? p.skin : p.top).clone().multiplyScalar(DIM).toArray(A.aArm, i * 3);
+    });
+    Object.entries(A).forEach(([k, v]) => geo.setAttribute(k, new THREE.InstancedBufferAttribute(v, 3)));
+    return geo;
+  };
   const meshes = Object.entries(shapes).map(([name, arms]) => {
     const list = people.filter(p => p.shape === name);
-    const mesh = new THREE.InstancedMesh(mergeGeometries([...body(), ...arms.flat()]), new THREE.MeshLambertMaterial({ color: 0xffffff }), Math.max(1, list.length));
+    const mesh = new THREE.InstancedMesh(dress(mergeGeometries([...body(), ...arms.flat()]), list), crowdMat, Math.max(1, list.length));
     mesh.count = list.length; mesh.frustumCulled = false;
-    list.forEach((p, i) => { p.mesh = mesh; p.i = i; mesh.setColorAt(i, c.setHSL(p.hue, 0.25, p.l)); });
+    list.forEach((p, i) => { p.mesh = mesh; p.i = i; });
+    festG.add(mesh);
+    return mesh;
+  });
+  const hairMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const hairs = Object.entries(HAIR).map(([name, gs]) => {
+    const list = people.filter(p => p.hair === name);
+    const mesh = new THREE.InstancedMesh(gs.length > 1 ? mergeGeometries(gs) : gs[0], hairMat, Math.max(1, list.length));
+    mesh.count = list.length; mesh.frustumCulled = false;
+    list.forEach((p, i) => { p.hairMesh = mesh; p.hairI = i; mesh.setColorAt(i, c.copy(p.hairC).multiplyScalar(DIM)); });
     festG.add(mesh);
     return mesh;
   });
@@ -1078,17 +1127,16 @@ const festCrowd = (() => {
       local: new THREE.Matrix4().makeTranslation(0, -ARM - 0.075, -0.035).multiply(new THREE.Matrix4().makeRotationZ(land ? Math.PI / 2 : 0))
         .multiply(new THREE.Matrix4().makeScale(sc, sc * (0.9 + Math.random() * 0.2), 1)) };
   });
-  const lambert = new THREE.MeshLambertMaterial({ color: 0xffffff });
-  const phoneArms = new THREE.InstancedMesh(mergeGeometries(arm(0, 0, 0, fist())), lambert, nH);
+  const phoneArms = new THREE.InstancedMesh(dress(mergeGeometries(arm(0, 0, 0, fist())), holders), crowdMat, nH);
   const phones = new THREE.InstancedMesh(new THREE.BoxGeometry(0.072, 0.15, 0.01), new THREE.MeshBasicMaterial({ color: 0xffffff }), nH);
   [phoneArms, phones].forEach(m => { m.count = holders.length; m.frustumCulled = false; festG.add(m); });
-  holders.forEach((p, k) => { phoneArms.setColorAt(k, c.setHSL(p.hue, 0.25, p.l)); phones.setColorAt(k, c.setRGB(0, 0, 0)); });
+  holders.forEach((p, k) => phones.setColorAt(k, c.setRGB(0, 0, 0)));
   const fg = new THREE.BufferGeometry();
   fg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nH * 3), 3));
   fg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nH * 3), 3));
   const flashes = new THREE.Points(fg, new THREE.PointsMaterial({ size: 0.45, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   flashes.frustumCulled = false; festG.add(flashes);
-  return { people, meshes, holders, phoneArms, phones, flashes, shoulder: new THREE.Matrix4().makeTranslation(...R, 0), PHONE_ARM };
+  return { people, meshes, hairs, holders, phoneArms, phones, flashes, shoulder: new THREE.Matrix4().makeTranslation(...R, 0), PHONE_ARM };
 })();
 const FLASH_AT = new THREE.Vector3(0.022, 0.055, -0.008), FLASH_RGB = new THREE.Color(0xfff6e8); // flash, in the phone's own frame
 let festMusicT = 0;
@@ -1340,6 +1388,7 @@ function festUpdate(beat, pulse, dt, t) {
     const a = p.lean * (0.5 + 0.5 * Math.sin((beat * p.leanSpeed + p.ph * 8) * Math.PI)) * energy; // lean from the feet
     crowdQ.setFromEuler(crowdE.set(0, p.yaw, a));
     p.mesh.setMatrixAt(p.i, crowdM.compose(crowdP.set(p.x + sway, y, p.z), crowdQ, crowdS.set(p.w, p.h, p.w)));
+    if (p.hairMesh) p.hairMesh.setMatrixAt(p.hairI, crowdM);
     if (p.phone) {
       const C = festCrowd, k = C.holders.indexOf(p), ph = p.phone;
       if (!festMusicT) { ph.up = false; ph.wait = 2 + Math.random() * 14; }                   // first lift a little after the music starts
@@ -1355,7 +1404,7 @@ function festUpdate(beat, pulse, dt, t) {
     }
   }
   festMusicT = musicOn() ? festMusicT + dt : 0;
-  festCrowd.meshes.forEach(m => m.instanceMatrix.needsUpdate = true);
+  festCrowd.meshes.forEach(m => m.instanceMatrix.needsUpdate = true); festCrowd.hairs.forEach(m => m.instanceMatrix.needsUpdate = true);
   const C = festCrowd; C.phoneArms.instanceMatrix.needsUpdate = C.phones.instanceMatrix.needsUpdate = true;
   if (C.phones.instanceColor) C.phones.instanceColor.needsUpdate = true;
   C.flashes.geometry.attributes.position.needsUpdate = C.flashes.geometry.attributes.color.needsUpdate = true;
