@@ -6,6 +6,21 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v12 - 2026-11-03 - Camera limits; phones lift and lower with the music
+
+**Camera:**
+
+- `maxDistance` is the scene's `cam.max + 1.5` (was +3).
+- `keepCamera()` runs after `controls.update()`. It keeps the camera at y >= 0.35 in every scene, and in the studio inside the side walls and in front of the back wall.
+- `maxPolarAngle` is untouched.
+
+**Phones (festival crowd):**
+
+- **Arm:** each holder's right arm is its own instanced mesh (`phoneArms`), pivoting at the shoulder. The phone box is attached to the hand.
+- **Motion:** with no music, all arms are down. While music plays, each holder first lifts a random 2-16 s in, keeps the phone up for 8-28 s, lowers it for 5-23 s, and repeats. They lift at 0.4/s and lower at 0.6/s.
+- **Screen and flash:** the screen brightens as the phone comes up. The flash (75% of holders) shows only near the top of the lift.
+- **Variety:** each phone has its own size, portrait or landscape grip (30% landscape) and screen tint.
+
 ### v11 - 2026-11-03 - Freeze fix, three matching walls, JPEG walls, history squashed
 
 **Picture froze after the first song (main stage, club, rooftop):**
