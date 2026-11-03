@@ -1088,8 +1088,10 @@ for (const side of [-1, 1]) for (let i = 0; i < 6; i++) laserHeads.push({ row: '
 laserHeads.forEach((h, i) => { h.i = i; h.k = h.row === 'side' ? i - 28 - (h.side > 0 ? 6 : 0) : i % 14; h.u = h.row === 'side' ? h.k / 5 : h.k / 13; });
 const laserBeams = (() => {
   const n = laserHeads.length * LASER_F;
-  const m = new THREE.InstancedMesh(new THREE.BoxGeometry(0.04, 0.04, 1).translate(0, 0, 0.5),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }), n);
+  // A beam is brightest at the head and fades out over the crowd (vertex colours along its length)
+  const geo = new THREE.BoxGeometry(0.035, 0.035, 1).translate(0, 0, 0.5), zs = geo.attributes.position.array;
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(zs.length).map((_, i) => 1 - 0.92 * zs[i - (i % 3) + 2]), 3));
+  const m = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }), n);
   m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   for (let i = 0; i < n; i++) m.setColorAt(i, new THREE.Color(0, 0, 0));
   festG.add(m);
@@ -1105,7 +1107,7 @@ const laserBeams = (() => {
   return { m, glow };
 })();
 const LASER_COLS = [0x20e0ff, 0x30ff70, 0xff2d95, 0x8a5cff, 0xe8f4ff, 0xffb020].map(c => new THREE.Color(c));
-const LASER_LEN = 60, laserQ = new THREE.Quaternion(), laserE = new THREE.Euler(0, 0, 0, 'YXZ'), laserS = new THREE.Vector3(1, 1, LASER_LEN), laserM = new THREE.Matrix4(), laserC = new THREE.Color();
+const LASER_LEN = 30, laserQ = new THREE.Quaternion(), laserE = new THREE.Euler(0, 0, 0, 'YXZ'), laserS = new THREE.Vector3(1, 1, LASER_LEN), laserM = new THREE.Matrix4(), laserC = new THREE.Color();
 // Each look gives a beam's aim as [yaw, elevation] (radians; yaw 0 is straight at the crowd, +x to the right).
 // s: -0.5..0.5 across the head's fan; h.u: 0..1 along its row; bt: beats.
 function laserAim(h, s, look, bt) {
