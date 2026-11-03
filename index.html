@@ -980,9 +980,11 @@ function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.
 // kaleidoscopic fractal, tunnel, floor-style tile ripples, plasma. A handful of loop steps per pixel; light on the GPU.
 const festScreenMat = new THREE.ShaderMaterial({
   toneMapped: false, fog: false,
-  uniforms: { uBeat: { value: 0 }, uPulse: { value: 0 }, uLive: { value: 0 }, uChill: { value: 0 }, uMode: { value: 0 }, uA: { value: new THREE.Color(0xff2d95) }, uB: { value: new THREE.Color(0x20e0ff) }, uAspect: { value: 2.6 } },
+  uniforms: { uBeat: { value: 0 }, uPulse: { value: 0 }, uLive: { value: 0 }, uChill: { value: 0 }, uMode: { value: 0 }, uA: { value: new THREE.Color(0xff2d95) }, uB: { value: new THREE.Color(0x20e0ff) }, uAspect: { value: 2.6 },
+    uArt: { value: null }, uArtMix: { value: 0 }, uArtXf: { value: new THREE.Vector4(1, 1, 0, 0) }, uCam: { value: null }, uCamMix: { value: 0 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-  fragmentShader: `varying vec2 vUv; uniform float uBeat, uPulse, uLive, uChill, uMode, uAspect; uniform vec3 uA, uB;
+  fragmentShader: `varying vec2 vUv; uniform float uBeat, uPulse, uLive, uChill, uMode, uAspect, uArtMix, uCamMix; uniform vec3 uA, uB;
+    uniform sampler2D uArt, uCam; uniform vec4 uArtXf;
     vec3 pal(float t){ return mix(uA, uB, 0.5 + 0.5 * sin(6.2831 * t)); }
     void main(){
       vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0) * 2.0;
@@ -1008,11 +1010,83 @@ const festScreenMat = new THREE.ShaderMaterial({
         col = pal(v * 0.15 + bt * 0.03) * (0.35 + 0.65 * smoothstep(-1.0, 3.0, v));
       }
       float lv = mix(0.18, 0.35 + 0.65 * uPulse, uLive) * (1.0 - 0.55 * uChill);
-      gl_FragColor = vec4(col * lv * 1.7, 1.0);
+      vec3 outc = col * lv * 1.7;
+      // Art: a still image, slowly zooming and drifting (uArtXf: visible size and offset), pulsing with the beat
+      if (uArtMix > 0.001) {
+        vec3 art = texture2D(uArt, (vUv - 0.5) * uArtXf.xy + 0.5 + uArtXf.zw).rgb;
+        outc = mix(outc, art * (0.7 + 0.45 * uPulse * uLive) * (1.0 - 0.3 * uChill) + col * lv * 0.35, uArtMix);
+      }
+      // Live camera on the dancers: tone-mapped, with faint scan lines and a vignette, like a broadcast feed
+      if (uCamMix > 0.001) {
+        vec3 c = texture2D(uCam, vUv).rgb; c = pow(c / (1.0 + c), vec3(0.4545));
+        c *= (0.93 + 0.07 * sin(vUv.y * 700.0)) * (1.0 - 0.45 * length((vUv - 0.5) * vec2(1.0, 1.6)));
+        outc = mix(outc, c * 1.25, uCamMix);
+      }
+      gl_FragColor = vec4(outc, 1.0);
     }` });
 const festScreen = new THREE.Mesh(new THREE.PlaneGeometry(30, 11.5), festScreenMat);
 festScreen.position.set(0, 6.4, -12.8); festG.add(festScreen);
-for (const side of [-1, 1]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(8, 11.5), festScreenMat); s.position.set(side * 19.5, 6.4, -11.6); s.rotation.y = -side * 0.35; festG.add(s); }
+// The side screens keep the generative looks: same shader and uniforms, minus the art and camera feed
+const festSideMat = festScreenMat.clone();
+festSideMat.uniforms = { ...festScreenMat.uniforms, uArtMix: { value: 0 }, uCamMix: { value: 0 }, uArt: { value: null }, uCam: { value: null } };
+for (const side of [-1, 1]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(8, 11.5), festSideMat); s.position.set(side * 19.5, 6.4, -11.6); s.rotation.y = -side * 0.35; festG.add(s); }
+// Screen art and the live camera. Art comes from screens/ (or, until there is any, the wide wallpapers), one image at a
+// time, downloaded only when about to be shown; at most two textures live at once. On phrase starts the big screen
+// cross-fades between its generative looks and a still image that slowly zooms and drifts. Rarely, for 8 bars, a
+// camera at the stage front films the dancers and the big screen shows the feed. It renders only while shown, small,
+// every other frame.
+let festArt = [];
+const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0 };
+const bcTarget = new THREE.WebGLRenderTarget(512, 196, { samples: 0 });
+const bcCam = new THREE.PerspectiveCamera(32, 512 / 196, 0.1, 80);
+function nextArt() {
+  if (!festArt.length || screenShow.nextFor) return;
+  const f = festArt[Math.floor(Math.random() * festArt.length)]; screenShow.nextFor = f;
+  (f.load ? f.load() : Promise.resolve(f)).then(b => createImageBitmap(b, { imageOrientation: 'flipY' })).then(bmp => {
+    const t = new THREE.Texture(bmp); t.flipY = false; t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.anisotropy = 4; t.needsUpdate = true; t.userData.aspect = bmp.width / bmp.height;
+    if (screenShow.next) screenShow.next.dispose();
+    screenShow.next = t;
+  }).catch(() => {}).finally(() => { screenShow.nextFor = null; });
+}
+function updateScreen(beat, bar, dt, t) {
+  const S = screenShow, u = festScreenMat.uniforms;
+  if (bar !== S.bar && mod(bar, 8) === 0 && musicOn()) {
+    S.bar = bar;
+    if (S.camTo && bar >= S.camUntil) S.camTo = 0;
+    // The camera: rarely (about one phrase in ten, two minutes apart at least), only with dancers on stage
+    if (!S.camTo && stageSet.size && t - S.lastCam > 120 && Math.random() < 0.1) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; }
+    // Art: 8 or 16 bars of a still, then 8-16 bars of the generative looks; the next still loads in the meantime
+    if (S.artTo && bar >= S.until) { S.artTo = 0; S.until = bar + (Math.random() < 0.5 ? 8 : 16); nextArt(); }
+    else if (!S.artTo && bar >= S.until && S.next) {
+      if (S.tex && S.tex !== S.next) S.tex.dispose();
+      S.tex = S.next; S.next = null; S.artTo = 1; S.until = bar + (Math.random() < 0.5 ? 8 : 16); S.kb = 0;
+      S.kbDir = [Math.random() * 2 - 1, Math.random() * 2 - 1];
+    }
+  }
+  if (!S.next && !S.artTo) nextArt();
+  if (!musicOn() && S.tex) S.artTo = 1;                        // no music: the screen rests on a slowly drifting still
+  S.art += (S.artTo - S.art) * Math.min(1, dt * 1.5);
+  S.cam += (S.camTo - S.cam) * Math.min(1, dt * 2);
+  u.uArtMix.value = S.tex ? S.art : 0; u.uArt.value = S.tex;
+  if (S.tex) {                                                 // cover the screen, zooming in slowly (Ken Burns)
+    S.kb += dt;
+    const A = 30 / 11.5, a = S.tex.userData.aspect || A, z = 1 + Math.min(0.15, S.kb * 0.004) + 0.012 * u.uPulse.value * u.uLive.value;
+    const xs = (a > A ? A / a : 1) / z, ys = (a > A ? 1 : a / A) / z;
+    u.uArtXf.value.set(xs, ys, S.kbDir[0] * (1 - xs) * 0.4 * Math.min(1, S.kb / 30), S.kbDir[1] * (1 - ys) * 0.4 * Math.min(1, S.kb / 30));
+  }
+  u.uCamMix.value = S.cam;
+  if (S.cam > 0.01 && (S.frame++ % 2 === 0)) {
+    // A slow dolly across the front of the stage, framing the dancers
+    const xs = [...stageSet].map(a => a.obj.position.x), cx = xs.length ? xs.reduce((p, q) => p + q, 0) / xs.length : 0;
+    bcCam.position.set(cx + Math.sin(t * 0.15) * 3, 1.5 + Math.sin(t * 0.11) * 0.3, 6.5);
+    bcCam.lookAt(cx, 1.05, 0);
+    const vis = festScreen.visible; festScreen.visible = false;  // never film the screen it's being shown on
+    renderer.setRenderTarget(bcTarget); renderer.render(scene, bcCam); renderer.setRenderTarget(null);
+    festScreen.visible = vis;
+    u.uCam.value = bcTarget.texture;
+  }
+}
 const festWash = new THREE.PointLight(0xff2d95, 40, 45, 1.2); festWash.position.set(0, 7, 6); festG.add(festWash);
 const festFlameLight = new THREE.PointLight(0xff8030, 0, 30, 1.3); festFlameLight.position.set(0, 2, 6); festG.add(festFlameLight);
 // Crowd: instanced silhouettes (head, neck, shoulders, arms, hands, legs; no faces or detail). A few raise one or both
@@ -1467,6 +1541,7 @@ function punchAt(beat) {
   return null;
 }
 function festUpdate(beat, pulse, dt, t) {
+  updateScreen(beat, Math.floor(beat / 4), dt, t);
   const u = festScreenMat.uniforms; u.uBeat.value = beat; u.uPulse.value = pulse; u.uLive.value = liveMix; u.uChill.value = chillMix; u.uMode.value = mod(choreo.seg, 4);
   const bar = Math.floor(beat / 4), groove = musicOn() && chillMix < 0.5, energy = liveMix * (1 - 0.75 * chillMix);
   u.uA.value.copy(FEST_PAL[mod(bar, 4)]); u.uB.value.copy(FEST_PAL[mod(bar + 1, 4)]);
@@ -2775,7 +2850,7 @@ async function loadFiles(fileList, asAvatar = false, hint = null) {
 /* ---------------- Library folders: avatars/, dances/, songs/ (+ crowd/, walks/) ---------------- */
 const LIB_DIRS = { avatars: 'avatar', avatar: 'avatar', characters: 'avatar', character: 'avatar', dances: 'dance', dance: 'dance',
   crowd: 'crowd', idle: 'crowd', idles: 'crowd', audience: 'crowd', walks: 'walk', walk: 'walk', songs: 'song', song: 'song', music: 'song',
-  walls: 'wall', wall: 'wall', wallpaper: 'wall', wallpapers: 'wall', art: 'wall' };
+  walls: 'wall', wall: 'wall', wallpaper: 'wall', wallpapers: 'wall', art: 'wall', screens: 'screen', screen: 'screen' };
 const isAudio = f => f.type.startsWith('audio/') || /\.(mp3|wav|m4a|ogg|flac)$/i.test(f.name);
 // walls folder: a random wide image goes on the back wall (seen in the mirror); a random image goes on the left wall
 // and the closest in colour (hue, saturation, brightness) on the right, so the two side walls match.
@@ -2859,6 +2934,9 @@ async function loadLibrary(groups, label) {
   songs[0]?.file?.load?.().catch(() => {});
   const imgs = (groups.wall || []).filter(f => /\.(jpe?g|png|webp|avif|gif)$/i.test(f.name));
   if (imgs.length) randomWalls(imgs);
+  // Stage screen art: screens/, or until there is any, the wide (3:1 and up) wallpapers
+  const art = (groups.screen || []).filter(f => /\.(jpe?g|png|webp)$/i.test(f.name));
+  festArt = art.length ? art : imgs.filter(f => f.look && f.look.aspect >= 2.4);
   // Phase 1 (behind the loader): walks, crowd moves, the first dances and START_CHARACTERS random characters.
   // Everyone else stays listed but unticked, and loads (downloads, from the web) when you tick them.
   const web = [...walks, ...crowd, ...allDances, ...chars].some(f => f.load);
