@@ -10,8 +10,8 @@ Running context for this project: what was decided, why, and what's still open. 
 
 **Art filters** (in the screen shader, the equivalent of CSS filters):
 
-- **What they are:** the screen is inside the WebGL canvas, so CSS can't reach it. `uArtFx` is picked per still (15% plain): 1 hue drift, 2 one colour kept and the rest grey, 3 gradient map in the stage palette, 4 a highlight sweep per bar plus bright spots flashing on the kick, 5 chrome (cool silver with metallic highlights; the earlier solarise inverted colours and looked wrong), 6 greyscale with colour flashing on the kick, 7 a ripple with colour fringes on the kick.
-- **Cost:** 1-3 texture taps.
+- **What they are:** the screen is inside the WebGL canvas, so CSS can't reach it. Since the owner's follow-up, the filters are colour-only: no greyscale, inversion, chrome, sweeps or ripples, which "looked weird".
+- **Set (`uArtFx`, 20% plain):** 1 slow hue drift, 2 a soft tint in the stage palette (35%), 3 saturation richer on each kick, 4 split toning (shadows one stage colour, highlights the other, 40%), 5 hue swinging +-0.06 over each bar.
 
 **Camera feed:**
 
