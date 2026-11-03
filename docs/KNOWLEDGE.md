@@ -6,6 +6,29 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v15 - 2026-11-03 - Busy stage; laser looks like real laser shows; wall PNG fix
+
+**Busy stage:** everything is cheap and mostly instanced.
+
+- **DJ booth:** a riser at the back centre (`FEST_DJ`) with an LED face that reacts to the music (`festStrip`). It has decks, a mixer and a laptop, and the DJ bobs on the riser.
+- **Backline and rigging:** stacked flight cases in the back corners, 4 truss legs, 2 mic stands, a camera on a tripod, and monitor desks with lit screens at the front corners.
+- **People on stage:** 7 guests in each back corner, moving to the music (a few with a hand up), and a crew member at each desk. They're made by the crowd's `makePerson` and have a `base` floor height.
+- **Clear zones:** the dancers' slots (x within +-2.25, z within +-0.9) and the walk-in paths from the wings are kept clear.
+
+**Lasers** (research: parallel arrays, fans, tunnels and liquid-sky sheets, mirrored rigs, mostly one colour):
+
+- **Looks (`LASER_LOOKS`):** parallel, breathing fans, mirrored V sweep, tunnel, sky sheet, centre-out tilt wave, and criss-cross.
+- **Symmetry:** every look is mirrored left/right by each head's side.
+- **Timing:** a look holds 2 bars while moving. Criss-cross comes up about 1 time in 10, with only 3 beams per head.
+- **Parallel looks:** 3 emitters per head, offset 0.3 m, all in the same direction.
+- **Colour per 4 bars:** 65% one colour for every beam (`LASER_MONO`: classic green, white, cyan, theme); 28% a gradient mirrored from the centre out; 7% mixed.
+- **Width:** beams are slightly broader, 0.02 m at the far end.
+
+**Wall PNGs:**
+
+- **Bug:** the watcher's check `ls walls/*.png walls/*.PNG` failed whenever no uppercase `.PNG` existed, so 50 PNGs went up unconverted.
+- **Fix:** the check is now `ls walls | grep -qi '\.png$'`. Those 50 are converted; they remain in the history (about 120 MB).
+
 ### v14 - 2026-11-03 - Lasers into the crowd; crowd clothes, hair, smoother bodies; Light Director design
 
 **Lasers:**
