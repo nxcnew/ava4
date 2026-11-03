@@ -1183,8 +1183,9 @@ const festCrowd = (() => {
   }
   // On stage: a crew member at each monitor desk at the front corners, clear of the dancers and their walks in.
   for (const side of [-1, 1]) people.push(makePerson(side * 12.3, 2.0, 0, 'down', Math.PI + side * 1.1, FEST_DECK_TOP));
-  // The crowd is in the dark, lit by the stage: colours are kept deep so they read as people, not as glowing toys.
-  const DIM = 0.22;
+  // The crowd is in the dark: barely visible silhouettes. Colours are muted (pulled towards grey) and kept very deep,
+  // so outfits only hint where stage light catches them.
+  const DIM = 0.075, GREY = new THREE.Color(), mute = c => { const l = c.r * 0.3 + c.g * 0.59 + c.b * 0.11; return c.clone().lerp(GREY.setRGB(l, l, l), 0.45).multiplyScalar(DIM); };
   const crowdMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
   // Outfits are painted per fragment from the body part, the point on the body (object space; the face is at -z) and
   // the person's style: stripes, a print front and back, two-tone, a bare midriff, a waistband, shorts and skirt hems,
@@ -1215,7 +1216,7 @@ const festCrowd = (() => {
     const n = Math.max(1, list.length), at = () => new Float32Array(n * 3), st = new Float32Array(n * 4);
     const A = { aSkin: at(), aTop: at(), aBot: at(), aAcc: at() };
     list.forEach((p, i) => {
-      [[p.skin, 'aSkin'], [p.top, 'aTop'], [p.bottom, 'aBot'], [p.acc, 'aAcc']].forEach(([c, k]) => c.clone().multiplyScalar(DIM).toArray(A[k], i * 3));
+      [[p.skin, 'aSkin'], [p.top, 'aTop'], [p.bottom, 'aBot'], [p.acc, 'aAcc']].forEach(([c, k]) => mute(c).toArray(A[k], i * 3));
       st.set([p.topStyle, p.crop ? 1 : 0, p.botStyle, p.sleeves + (phoneArm ? 10 : 0)], i * 4);
     });
     Object.entries(A).forEach(([k, v]) => geo.setAttribute(k, new THREE.InstancedBufferAttribute(v, 3)));
@@ -1235,7 +1236,7 @@ const festCrowd = (() => {
     const list = people.filter(p => p.hair === name);
     const mesh = new THREE.InstancedMesh(gs.length > 1 ? mergeGeometries(gs) : gs[0], hairMat, Math.max(1, list.length));
     mesh.count = list.length; mesh.frustumCulled = false;
-    list.forEach((p, i) => { p.hairMesh = mesh; p.hairI = i; mesh.setColorAt(i, c.copy(p.hairC).multiplyScalar(DIM)); });
+    list.forEach((p, i) => { p.hairMesh = mesh; p.hairI = i; mesh.setColorAt(i, mute(p.hairC)); });
     festG.add(mesh);
     return mesh;
   });
