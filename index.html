@@ -1058,7 +1058,7 @@ const festCrowd = (() => {
   const TINTS = [0xa8c4ff, 0xdfe8ff, 0xffe6c4, 0xc4ffe4, 0xffc8ee, 0xf4f4f4];
   holders.forEach(p => {
     const sc = 0.85 + Math.random() * 0.4, land = Math.random() < 0.3;
-    p.phone = { lift: 0, delay: 2 + Math.random() * 14, flash: Math.random() < 0.75, tint: new THREE.Color(pick(TINTS)),
+    p.phone = { lift: 0, delay: 2 + Math.random() * 14, flash: Math.random() < 0.75, tint: new THREE.Color(TINTS[Math.floor(Math.random() * TINTS.length)]),
       local: new THREE.Matrix4().makeTranslation(0, -ARM - 0.075, -0.035).multiply(new THREE.Matrix4().makeRotationZ(land ? Math.PI / 2 : 0))
         .multiply(new THREE.Matrix4().makeScale(sc, sc * (0.9 + Math.random() * 0.2), 1)) };
   });
