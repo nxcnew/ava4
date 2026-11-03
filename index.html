@@ -215,7 +215,8 @@ ul.list:empty{display:none}
 .pseek input{flex:1;min-width:0;accent-color:var(--hot)}
 .pvol{display:flex;align-items:center;gap:6px;color:var(--muted);flex:none}
 .pvol input{width:80px;accent-color:var(--cool)}
-@media (hover:none){ .player{opacity:.9} }
+/* Touch: the player fades to a ghost like on desktop, wakes on touch (taps still work at once), fades 3 s later */
+@media (hover:none){ .player{opacity:.18} .player.awake{opacity:1;transition:opacity .2s ease 0s} }
 /* Phones: the player at the top (after the base rule, so it wins); the panel owns the bottom edge */
 @media (max-width:760px){
   .player{right:max(12px,env(safe-area-inset-right,0px));left:max(12px,env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));bottom:auto;gap:6px;padding:8px}
@@ -3955,6 +3956,12 @@ function setAutoHide(on) {
   if (autoHide) scheduleClose(700); else { clearTimeout(closeTimer); setPanelOpen(true); }
 }
 $('#panelPin').addEventListener('click', () => setAutoHide(!autoHide));
+let playerTimer = 0;
+$('#player').addEventListener('pointerdown', () => {
+  if (!touchUI.matches) return;
+  $('#player').classList.add('awake'); clearTimeout(playerTimer);
+  playerTimer = setTimeout(() => { if (!seeking) $('#player').classList.remove('awake'); }, 3000);
+}, { capture: true });
 // Collapse / expand: the same on every device. The arrow in the header slides the panel away; the Controls tab on
 // the right edge brings it back.
 $('#panelCollapse').addEventListener('click', () => { clearTimeout(openTimer); setPanelOpen(false); });
