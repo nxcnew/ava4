@@ -1361,7 +1361,7 @@ function applyEnv(name) {
   crowdLight.visible = e.crowd > 0; crowdLight.intensity = 30 * e.crowd;
   renderer.toneMappingExposure = e.exposure;
   if (envName === 'studio') ledMat.color.set(0xfff4e0);
-  controls.maxDistance = e.cam.max + 3;
+  controls.maxDistance = e.cam.max + 1.5;
   // Re-seat everyone who isn't performing for this scene (wings for the stage show, crowd arcs elsewhere)
   for (const av of avatars) {
     if (av.leaving || av.seatIx < 0) continue;
@@ -3525,6 +3525,14 @@ function frameCamera(dt) {
   camera.position.copy(controls.target).add(camOff.setFromSpherical(sph));
 }
 
+// However far you orbit or zoom out, the camera stays above the floor and, indoors, inside the side and back walls.
+// (The lowest viewing angle, maxPolarAngle, stays as tuned; at long range it would otherwise dip under the floor.)
+function keepCamera() {
+  const p = camera.position;
+  if (envName === 'studio' || envName === 'club') { p.x = clamp(p.x, -ROOM.side + 0.4, ROOM.side - 0.4); p.z = Math.max(p.z, ROOM.back + 0.4); }
+  p.y = Math.max(p.y, 0.35);
+}
+
 /* ---------------- Frame loop ---------------- */
 const dots = [...document.querySelectorAll('#dots i')];
 let lastBeatInt = null, lastFrameT = performance.now(), playerTick = 0, liveMix = 0, lastPulseT = performance.now();
@@ -3561,6 +3569,7 @@ function frame() {
   updateDoor(dt);
   frameCamera(dt);
   controls.update();
+  keepCamera();
 
   if ((playerTick = (playerTick + 1) % 6) === 0) updatePlayer();
   if (bi !== lastBeatInt) {
