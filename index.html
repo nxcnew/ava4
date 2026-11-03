@@ -1356,7 +1356,7 @@ function festUpdate(beat, pulse, dt, t) {
   const spb = 60 / Math.max(60, clock.bpm), sec = punchAt(beat);
   if (sec && sec !== festSec) { festSec = sec; festSecN++; sec.mode = (festSecN + festSecSeed) % 2 ? 'lasers' : 'pyro'; }
   const inSec = sec && groove, hitBar = inSec && mod(bar - sec.bar0, 4) === 0;
-  if (inSec && k !== pyroBeat && fr < 0.25) {
+  if (inSec && k !== pyroBeat) {                       // first frame of each beat, however slow the frames
     pyroBeat = k;
     const b4 = mod(k, 4), first = bar === sec.bar0;
     if (sec.mode === 'pyro' && hitBar && b4 === 0) {
