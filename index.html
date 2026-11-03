@@ -1389,6 +1389,7 @@ const FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10
     festG.add(im);
   });
 })();
+const festBoothFace = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.86), new THREE.MeshBasicMaterial({ color: 0x000000 }));
 // Busy stage, all cheap and mostly instanced: the DJ booth on a riser at the back (LED face, decks, mixer, laptop),
 // flight cases stacked behind, truss legs, mic stands, a camera on a tripod, monitor desks at the front corners.
 (() => {
@@ -1399,7 +1400,13 @@ const FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10
   add(new THREE.BoxGeometry(5.4, FEST_DJ.top - FEST_DECK_TOP, 2.8), festDark, 0, (FEST_DJ.top + FEST_DECK_TOP) / 2, FEST_DJ.z - 1.1);
   festStrip(new THREE.BoxGeometry(5.42, 0.07, 0.05), [0, FEST_DJ.top, FEST_DJ.z + 0.31], null, 1);
   add(new THREE.BoxGeometry(2.9, 1.0, 0.75), cases, 0, FEST_DJ.top + 0.5, FEST_DJ.z - 0.1);
-  festStrip(new THREE.PlaneGeometry(2.8, 0.86), [0, FEST_DJ.top + 0.5, FEST_DJ.z + 0.28], null, 2);
+  // The booth's front: a dim LED face, a dot grid with a few slim stripes, glowing softly (driven in festUpdate)
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 80; const g = cv.getContext('2d');
+  g.fillStyle = '#000'; g.fillRect(0, 0, 256, 80); g.fillStyle = '#fff';
+  for (let x = 4; x < 256; x += 8) for (let y = 4; y < 80; y += 8) { g.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(x * 0.05)); g.fillRect(x - 1, y - 1, 2, 2); }
+  g.globalAlpha = 1; for (const x of [40, 128, 216]) g.fillRect(x - 1, 6, 2, 68);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  festBoothFace.material.map = tex; festBoothFace.position.set(0, FEST_DJ.top + 0.5, FEST_DJ.z + 0.28); festG.add(festBoothFace);
   for (const x of [-0.75, 0.75]) add(new THREE.BoxGeometry(0.5, 0.07, 0.42), cases, x, FEST_DJ.top + 1.03, FEST_DJ.z - 0.15);   // decks
   add(new THREE.BoxGeometry(0.38, 0.08, 0.42), cases, 0, FEST_DJ.top + 1.04, FEST_DJ.z - 0.15);                                // mixer
   const lap = add(new THREE.PlaneGeometry(0.34, 0.22), glowM(0x7088ff), 1.25, FEST_DJ.top + 1.15, FEST_DJ.z - 0.3, Math.PI);      // laptop screen
@@ -1569,6 +1576,7 @@ function festUpdate(beat, pulse, dt, t) {
   const bar = Math.floor(beat / 4), groove = musicOn() && chillMix < 0.5, energy = liveMix * (1 - 0.75 * chillMix);
   u.uA.value.copy(FEST_PAL[mod(bar, 4)]); u.uB.value.copy(FEST_PAL[mod(bar + 1, 4)]);
   festWash.color.copy(u.uA.value); festWash.intensity = (6 + 26 * pulse) * (1 - 0.6 * chillMix);
+  festBoothFace.material.color.copy(FEST_PAL[mod(bar, 4)]).multiplyScalar((0.05 + 0.2 * pulse) * (0.3 + 0.7 * liveMix)); // soft, never a light source
   festStrips.forEach(s => s.material.color.copy(FEST_PAL[mod(s.userData.ix + Math.floor(beat), 4)]).multiplyScalar(0.15 + 0.85 * (0.3 + 0.7 * pulse) * (0.3 + 0.7 * liveMix)));
   // Crowd: most stand still; the rest bob gently on the beat or sway, and some of those lean a little to one side
   // and back, each their own way and pace. Calmer in quiet passages, all still with no music.
