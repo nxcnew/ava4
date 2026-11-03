@@ -27,7 +27,9 @@ Running context for this project: what was decided, why, and what's still open. 
 - Shells climb on a comet trail and burst on a chosen beat (`riseSecs`).
 - Kinds: peony, ring, willow (slow, gold, drooping) and glitter (twinkling).
 
-**Lasers:** 40 heads in uniform rows (14 along the stage floor, 14 on the front truss, 6 up each tower), 7 beams each, in one InstancedMesh of 280 beams.
+**Lasers:** 20 heads in uniform rows (7 along the stage floor, 7 on the front truss, 3 up each tower), 7 beams each, in one InstancedMesh of 140 beams. This was halved from 40 heads at the owner's request.
+
+- **Shape:** each beam is a 4-sided open cone, a point at the head widening to 0.012 m at 30 m: hair-thin and pointed.
 
 - **Beams:** 30 m long, fading along their length through vertex colours.
 - **Heads:** each is a dark box with a faint aperture glow.
@@ -40,7 +42,7 @@ Running context for this project: what was decided, why, and what's still open. 
   - **Starting point:** after a gap, or at an energy jump (the next 4 bars over 1.35x the previous 4).
 - **Within a section:** a cue every 4 bars on the downbeat, for up to 32 bars, while the beat holds. Sections alternate between pyro and lasers, starting at random.
   - **Pyro:** all flames, fountains for 4 beats, a 4-shell mixed volley on the first hit and one shell after that.
-  - **Lasers:** all 280 beams, full brightness on hit bars and 0.6 between.
+  - **Lasers:** all 140 beams, full brightness on hit bars and 0.6 between.
 - **Outside sections:** only a few soft beams from the top row.
 - **Firing:** cues fire on the first frame of each new beat, so slow frames can't skip one.
 
