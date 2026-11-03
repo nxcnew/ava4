@@ -1,0 +1,10 @@
+#!/bin/bash
+# Git pre-commit guard: refuses any commit that stages files from an *-original/ folder (unshrunk originals of
+# avatars, dances, walls, screens) or from .secrets/, even if they were added with `git add -f`.
+# Install: cp scripts/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
+bad=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)[^/]*-original/|^\.secrets/')
+if [ -n "$bad" ]; then
+  echo "Refusing to commit local-only files (originals or secrets):" >&2
+  echo "$bad" | sed 's/^/  /' >&2
+  exit 1
+fi
