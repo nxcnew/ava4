@@ -1078,16 +1078,69 @@ const festCrowd = (() => {
 const FLASH_AT = new THREE.Vector3(0.022, 0.055, -0.008), FLASH_RGB = new THREE.Color(0xfff6e8); // flash, in the phone's own frame
 let festMusicT = 0;
 const crowdC = new THREE.Color(), crowdM = new THREE.Matrix4(), crowdM2 = new THREE.Matrix4(), crowdQ = new THREE.Quaternion(), crowdE = new THREE.Euler(0, 0, 0, 'YXZ'), crowdP = new THREE.Vector3(), crowdS = new THREE.Vector3();
-// Lasers: from the top truss and both towers
-const lasers = [];
-for (let i = 0; i < 30; i++) {
-  const g = new THREE.BoxGeometry(0.035, 0.035, 70); g.translate(0, 0, 35);
-  const m = new THREE.Mesh(g, additive(PALETTE_HEX[i % 4], 0.5));
-  const group = Math.floor(i / 10);
-  if (group === 0) m.position.set((i - 4.5) * 2.4, 10.4, -6);
-  else m.position.set((group === 1 ? -14.5 : 14.5), FEST_GROUND + 4 + (i % 10) * 1.3, -7.2);
+// Lasers: 40 laser heads in uniform rows (along the stage floor, on the front truss, up both towers), 7 beams each,
+// all one instanced mesh. Each head is a small dark box with a faint glow at its aperture. The beams draw geometric
+// patterns aimed at the crowd, changing every bar; full brightness in laser sections, a few soft beams otherwise.
+const LASER_F = 7, laserHeads = [];
+for (let i = 0; i < 14; i++) laserHeads.push({ row: 'floor', p: new THREE.Vector3(-12.35 + i * 1.9, FEST_DECK_TOP + 0.12, FRONT_Z - 0.9) });
+for (let i = 0; i < 14; i++) laserHeads.push({ row: 'top', p: new THREE.Vector3(-12.35 + i * 1.9, 10.2, 3.2) });
+for (const side of [-1, 1]) for (let i = 0; i < 6; i++) laserHeads.push({ row: 'side', side, p: new THREE.Vector3(side * 12.6, FEST_GROUND + 3 + i * 1.6, -7.2) });
+laserHeads.forEach((h, i) => { h.i = i; h.k = h.row === 'side' ? i - 28 - (h.side > 0 ? 6 : 0) : i % 14; h.u = h.row === 'side' ? h.k / 5 : h.k / 13; });
+const laserBeams = (() => {
+  const n = laserHeads.length * LASER_F;
+  const m = new THREE.InstancedMesh(new THREE.BoxGeometry(0.04, 0.04, 1).translate(0, 0, 0.5),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }), n);
+  m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  for (let i = 0; i < n; i++) m.setColorAt(i, new THREE.Color(0, 0, 0));
   festG.add(m);
-  lasers.push({ m, group, ix: i % 10, from: new THREE.Euler(), to: new THREE.Euler(), k: null });
+  const box = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.22, 0.34), new THREE.MeshStandardMaterial({ color: 0x101016, roughness: 0.6, metalness: 0.4 }), laserHeads.length);
+  const M = new THREE.Matrix4();
+  laserHeads.forEach((h, i) => box.setMatrixAt(i, M.makeTranslation(h.p.x, h.p.y, h.p.z - 0.18)));
+  festG.add(box);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(laserHeads.flatMap(h => [h.p.x, h.p.y, h.p.z])), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(laserHeads.length * 3), 3));
+  const glow = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.5, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  glow.frustumCulled = false; festG.add(glow);
+  return { m, glow };
+})();
+const LASER_COLS = [0x20e0ff, 0x30ff70, 0xff2d95, 0x8a5cff, 0xe8f4ff, 0xffb020].map(c => new THREE.Color(c));
+const LASER_LEN = 60, laserQ = new THREE.Quaternion(), laserE = new THREE.Euler(0, 0, 0, 'YXZ'), laserS = new THREE.Vector3(1, 1, LASER_LEN), laserM = new THREE.Matrix4(), laserC = new THREE.Color();
+// Each look gives a beam's aim as [yaw, elevation] (radians; yaw 0 is straight at the crowd, +x to the right).
+// s: -0.5..0.5 across the head's fan; h.u: 0..1 along its row; bt: beats.
+function laserAim(h, s, look, bt) {
+  const toX = h.row === 'side' ? -h.side * 0.55 : -h.p.x / 40;                     // heads lean in towards the middle
+  const base = h.row === 'floor' ? 0.22 : h.row === 'top' ? -0.12 : 0.05;
+  const alt = Math.floor(bt) % 2 ? 1 : -1, ph = bt * Math.PI / 2;
+  switch (look) {
+    case 0: return [toX + s * 1.1, base];                                                       // fans
+    case 1: return [toX + s * 0.5 + 0.45 * Math.sin(ph + h.u * 3), base + 0.04 * Math.sin(ph * 2)]; // sweeping fans
+    case 2: return [toX + (h.u - 0.5) * -0.9 * alt + s * 0.25, base];                             // criss-cross, flips every beat
+    case 3: return [toX + s * 0.9, base + 0.2 * Math.sin(ph + h.u * 5 + s)];                     // waves rolling along the rows
+    case 4: { const a = (s + 0.5) * Math.PI * 2 + bt * 0.4, r = 0.12;                           // tunnels: cones aimed at one point
+      const dx = -h.p.x, dy = 5 - h.p.y, dz = 16 - h.p.z;
+      return [Math.atan2(dx, dz) + Math.cos(a) * r, Math.atan2(dy, Math.hypot(dx, dz)) + Math.sin(a) * r]; }
+    default: return [toX + s * 1.6, h.row === 'floor' ? 0.4 : h.row === 'top' ? -0.28 : 0.15]; // flat sheets over the crowd
+  }
+}
+// level: 0..1 overall brightness; full: every beam on (otherwise only the top row, one beam each)
+function updateLasers(bt, bar, pulse, level, full, seed) {
+  const L = laserBeams, look = mod(bar + seed, 6), cA = LASER_COLS[mod(bar + seed, LASER_COLS.length)], cB = LASER_COLS[mod(bar + seed + 2, LASER_COLS.length)];
+  const glowC = L.glow.geometry.attributes.color.array;
+  laserHeads.forEach(h => {
+    const on = full || (h.row === 'top' && h.k % 2 === mod(Math.floor(bt), 2));
+    const lv = on ? level * (0.55 + 0.45 * pulse) : 0;
+    for (let b = 0; b < LASER_F; b++) {
+      const idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full || b === 3);
+      if (beamOn) {
+        const [yaw, el] = laserAim(h, b / (LASER_F - 1) - 0.5, look, bt);
+        L.m.setMatrixAt(idx, laserM.compose(h.p, laserQ.setFromEuler(laserE.set(-el, yaw, 0)), laserS));
+      } else L.m.setMatrixAt(idx, laserM.makeScale(0, 0, 0));
+      L.m.setColorAt(idx, laserC.copy((h.i + b) % 2 ? cA : cB).multiplyScalar(beamOn ? lv * 0.9 : 0));
+    }
+    laserC.copy(cA).multiplyScalar(lv * 0.5).toArray(glowC, h.i * 3);
+  });
+  L.m.instanceMatrix.needsUpdate = true; L.m.instanceColor.needsUpdate = true; L.glow.geometry.attributes.color.needsUpdate = true;
 }
 // Beam fixtures: soft visible cones on the trusses and wings, moving to cue positions on the beat
 const beams = [];
@@ -1238,10 +1291,18 @@ function updateFireworks(dt) {
     fw.p.geometry.attributes.position.needsUpdate = true;
   }
 }
-// Pyro cues, all on the beat: a flame chase on the first bar of every 16-bar phrase, spark fountains in the middle of
-// phrases now and then, a shell or two every 8 bars. The big moment is when the beat comes back after a breakdown or
-// a quiet passage: on that downbeat, every flame fires, the fountains open and a mixed volley goes up.
-let pyroBeat = -Infinity, festWasChill = true, hadGroove = false, quietSince = 0, bigPending = false;
+let pyroBeat = -Infinity, festSec = null, festSecN = 0;
+const festSecSeed = Math.floor(Math.random() * 6);
+// The punchy section playing at this beat: { bar0 (first bar, in clock bars), bars }, or null
+function punchAt(beat) {
+  const a = clock.mode === 'track' && clock.map, list = a && a.punch;
+  if (!list) return null;
+  for (const sec of list) {
+    const b0 = (sec[0] - a.down) / 4;
+    if (beat >= b0 * 4 && beat < (b0 + sec[1]) * 4) return sec.info || (sec.info = { bar0: Math.round(b0), bars: sec[1] });
+  }
+  return null;
+}
 function festUpdate(beat, pulse, dt, t) {
   const u = festScreenMat.uniforms; u.uBeat.value = beat; u.uPulse.value = pulse; u.uLive.value = liveMix; u.uChill.value = chillMix; u.uMode.value = mod(choreo.seg, 4);
   const bar = Math.floor(beat / 4), groove = musicOn() && chillMix < 0.5, energy = liveMix * (1 - 0.75 * chillMix);
@@ -1278,18 +1339,6 @@ function festUpdate(beat, pulse, dt, t) {
   C.flashes.geometry.attributes.position.needsUpdate = C.flashes.geometry.attributes.color.needsUpdate = true;
   // Lasers and beams: hit a position on the beat, hold, glide to land on the next beat
   const k = Math.floor(beat), fr = beat - k, e = easeIO(clamp((fr - 0.3) / 0.7, 0, 1));
-  lasers.forEach(L => {
-    if (L.k !== k) {
-      L.k = k; L.from.copy(L.m.rotation);
-      const alt = k % 2 ? 1 : -1, side = (L.ix - 4.5) / 4.5;
-      if (L.group === 0) L.to.set(-0.1 - 0.22 * Math.abs(Math.sin(k * 0.7 + L.ix)), side * 0.6 * alt, 0);
-      else { const dir = L.group === 1 ? 1 : -1; L.to.set(-0.05 - 0.1 * ((L.ix + k) % 3), dir * (0.25 + 0.5 * ((L.ix + (k % 4)) % 5) / 4), 0); }
-    }
-    L.m.rotation.set(L.from.x + (L.to.x - L.from.x) * e, L.from.y + (L.to.y - L.from.y) * e, 0);
-    const on = L.group === 0 ? (L.ix + k) % 2 === 0 : (k % 4 === (L.group === 1 ? 1 : 3) || k % 4 === 0);
-    L.m.material.opacity = (on ? 0.08 + 0.45 * pulse : 0.02) * energy;
-    L.m.material.color.copy(PALETTE[mod(L.ix + L.group + bar, 4)]);
-  });
   beams.forEach(B => {
     if (B.k !== k) { B.k = k; B.from.copy(B.cur); const [x, z] = RIG_LOOKS[mod(choreo.seg + B.i, RIG_LOOKS.length)](B.i % 4, k + 1); B.to.set(x * 2.4, B.i % 2 ? FEST_DECK_TOP : FEST_GROUND, (B.i % 2 ? z : 6 + (B.i % 3) * 1.5)); } // onto the stage and the front rows
     B.cur.lerpVectors(B.from, B.to, e); B.m.lookAt(B.cur);
@@ -1299,31 +1348,25 @@ function festUpdate(beat, pulse, dt, t) {
   // Strobes flash on the beat in the busiest passages; bigger hit on the downbeat
   const strobeOn = groove && mod(bar, 8) >= 6;
   strobes.forEach((s, i) => { s.material.opacity = strobeOn && fr < 0.08 && (i + k) % 2 === 0 ? 0.9 : (k % 4 === 0 && fr < 0.06 && groove ? 0.6 : 0); });
-  // Pyro cues (see above). Fired on beat boundaries only.
-  const spb = 60 / Math.max(60, clock.bpm);
-  if (!musicOn()) hadGroove = false;
-  if (groove && festWasChill && hadGroove && beat - quietSince >= 8) bigPending = true;   // back after 2+ quiet bars
-  if (!groove && !festWasChill) quietSince = beat;
-  if (groove) hadGroove = true;
-  festWasChill = !groove;
-  if (groove && k !== pyroBeat && fr < 0.25) {
+  // Show cues: only in the song's punchy sections (see `punch` in songAnalysis), every 4 bars from the section's
+  // first downbeat while the beat holds. Each section is either pyro (every flame, the spark fountains, fireworks)
+  // or a full laser show; they alternate, starting at random.
+  const sec = punchAt(beat);
+  if (sec && sec !== festSec) { festSec = sec; festSecN++; sec.mode = (festSecN + festSecSeed) % 2 ? 'lasers' : 'pyro'; }
+  const inSec = sec && groove, hitBar = inSec && mod(bar - sec.bar0, 4) === 0;
+  if (inSec && k !== pyroBeat && fr < 0.25) {
     pyroBeat = k;
-    const b4 = mod(k, 4), phrase = mod(bar, 16);
-    if (bigPending && b4 === 0) {
-      bigPending = false;
+    const b4 = mod(k, 4), first = bar === sec.bar0;
+    if (sec.mode === 'pyro' && hitBar && b4 === 0) {
       flames.forEach((_, i) => fireFlame(i));
-      SPARK_X.forEach((_, i) => fireSparks(i, spb * 8));
-      ['peony', 'ring', 'willow', 'glitter', 'peony', 'willow'].forEach((kd, i) => setTimeout(() => launchFirework(kd, (i - 2.5) * 9, spb * 2 - i * 0.12), i * 120));
-    } else if (phrase === 0) {
-      // Chase from the outside in, a pair per beat, all six on beat 4
-      const pairs = [[0, 5], [1, 4], [2, 3], [0, 1, 2, 3, 4, 5]][b4];
-      pairs.forEach(fireFlame);
-    } else if (phrase === 8 && b4 === 0 && Math.random() < 0.6) {
-      const pair = Math.random() < 0.5 ? [0, 3] : [1, 2];
-      pair.forEach(i => fireSparks(i, spb * 8));
+      SPARK_X.forEach((_, i) => fireSparks(i, spb * 4));
+      if (first) ['peony', 'ring', 'willow', 'glitter'].forEach((kd, i) => launchFirework(kd, (i - 1.5) * 12, spb * 2));
+      else launchFirework(null, undefined, spb * 2);                                       // bursts land 2 beats later
     }
-    if (mod(bar, 8) === 4 && b4 === 0) for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--) launchFirework(null, undefined, spb * 2); // bursts land 2 beats later
+    if (sec.mode === 'pyro' && hitBar && b4 === 2) [0, 5].forEach(fireFlame);              // an echo from the outer pair
   }
+  const laserShow = inSec && sec.mode === 'lasers';
+  updateLasers(beat, bar, pulse, laserShow ? (hitBar ? 1 : 0.6) : 0.35 * energy, laserShow, festSecSeed);
   // Flames: advance each burst; billboard towards the camera around the vertical
   let flameGlow = 0;
   flames.forEach(f => {
@@ -3069,8 +3112,25 @@ function songAnalysis(x, sr) {
   // ignore flips shorter than two bars
   const smooth = arr => { const out = arr.slice(); let i = 0; while (i < out.length) { let j = i; while (j < out.length && out[j] === out[i]) j++; if (j - i < 6 && i > 0 && j < out.length) for (let k = i; k < j; k++) out[k] = !out[i]; i = j; } return out; };
   chill = smooth(smooth(chill));
+  // --- punch: the strongest groove sections (16+ bars with a beat in every bar, louder and hitting harder than the
+  // song's middle), starting where the beat comes back after a gap or the energy jumps. [first beat index, bars].
+  const barI = []; for (let i = down; i + 4 <= nB; i += 4) barI.push(i);
+  const hMed = med(atBeat) || 1, lM = lMed || 1;
+  const P = barI.map(i => { let l = 0, h = 0; for (let j = i; j < i + 4; j++) { l += loudB[j]; h += atBeat[j]; } return (l / 4 / lM) * (0.5 + 0.5 * h / 4 / hMed); });
+  const quietBar = m => chill.slice(barI[m], barI[m] + 4).some(Boolean), avgP = (a, b) => { let t = 0, n = 0; for (let m = Math.max(0, a); m < Math.min(P.length, b); m++) { t += P[m]; n++; } return n ? t / n : 0; };
+  const pMed = med(P), cands = [];
+  for (let m = 0; m < barI.length;) {
+    if (quietBar(m)) { m++; continue; }
+    let e = m; while (e < barI.length && !quietBar(e)) e++;          // a run of groove bars [m, e)
+    for (let c = m; c + 16 <= e; c++) {
+      const afterGap = c === m && m > 0, jump = c > m && avgP(c, c + 4) > 1.35 * avgP(c - 4, c);
+      if ((afterGap || jump || c === 0) && avgP(c, c + 16) > 1.05 * pMed) { cands.push({ c, bars: Math.min(32, e - c), p: avgP(c, c + 16) }); c += 15; }
+    }
+    m = e;
+  }
+  const punch = cands.sort((a, b) => b.p - a.p).slice(0, 3).sort((a, b) => a.c - b.c).map(k => [barI[k.c], k.bars]);
   const bpm = 60 * fps / period;
-  return { beats, down, bpm: Math.round(bpm * 10) / 10, chill };
+  return { beats, down, bpm: Math.round(bpm * 10) / 10, chill, punch };
 }
 
 let beatWorker = null, jobId = 0;
