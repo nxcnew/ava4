@@ -1141,12 +1141,15 @@ function laserTarget(h, s, look, bt, out) {
   }
 }
 const laserT = new THREE.Vector3();
-// level: 0..1 overall brightness; full: every beam on (otherwise only the top row, one beam each)
-function updateLasers(bt, bar, pulse, level, full, seed) {
+// level: 0..1 overall brightness. mode 0: a few soft beams from the top row. mode 1 (laser show): one row leads each
+// bar (floor, truss, towers in turn) with full fans, so the beams draw one clear pattern, not a web. mode 2 (the
+// downbeat of a hit bar): every row at once, for that beat only.
+function updateLasers(bt, bar, pulse, level, mode, seed) {
   const L = laserBeams, look = mod(bar + seed, 6), cA = LASER_COLS[mod(bar + seed, LASER_COLS.length)], cB = LASER_COLS[mod(bar + seed + 2, LASER_COLS.length)];
   const glowC = L.glow.geometry.attributes.color.array;
+  const lead = ['floor', 'top', 'side'][mod(bar + seed, 3)], full = mode > 0;
   laserHeads.forEach(h => {
-    const on = full || (h.row === 'top' && h.k % 2 === mod(Math.floor(bt), 2));
+    const on = mode === 2 || (mode === 1 ? h.row === lead : h.row === 'top' && h.k % 2 === mod(Math.floor(bt), 2));
     const lv = on ? level * (0.55 + 0.45 * pulse) : 0;
     for (let b = 0; b < LASER_F; b++) {
       const idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full || b === 3);
@@ -1385,7 +1388,7 @@ function festUpdate(beat, pulse, dt, t) {
     if (sec.mode === 'pyro' && hitBar && b4 === 2) [0, 5].forEach(fireFlame);              // an echo from the outer pair
   }
   const laserShow = inSec && sec.mode === 'lasers';
-  updateLasers(beat, bar, pulse, laserShow ? (hitBar ? 1 : 0.6) : 0.35 * energy, laserShow, festSecSeed);
+  updateLasers(beat, bar, pulse, laserShow ? (hitBar ? 1 : 0.7) : 0.35 * energy, laserShow ? (hitBar && mod(beat, 4) < 1 ? 2 : 1) : 0, festSecSeed);
   // Flames: advance each burst; billboard towards the camera around the vertical
   let flameGlow = 0;
   flames.forEach(f => {
