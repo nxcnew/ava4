@@ -436,7 +436,21 @@ try {
   $('#app').appendChild(d);
   throw e;
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const MAX_DPR = Math.min(devicePixelRatio, 2);
+let dpr = MAX_DPR;
+renderer.setPixelRatio(dpr);
+// Adaptive resolution: when frames come slower than about 45 fps for a second and a half, render at a lower pixel
+// ratio (in steps, down to 1); with headroom for a few seconds, step back up. Fast machines never notice.
+const fpsWatch = { t0: performance.now(), n: 0, slow: 0, fast: 0 };
+function watchFps(now) {
+  const W = fpsWatch; W.n++;
+  if (now - W.t0 < 500) return;
+  const fps = W.n * 1000 / (now - W.t0); W.t0 = now; W.n = 0;
+  if (document.hidden) return;
+  W.slow = fps < 45 ? W.slow + 1 : 0; W.fast = fps > 57 ? W.fast + 1 : 0;
+  if (W.slow >= 3 && dpr > 1) { dpr = Math.max(1, dpr - 0.25); renderer.setPixelRatio(dpr); W.slow = 0; }
+  else if (W.fast >= 8 && dpr < MAX_DPR) { dpr = Math.min(MAX_DPR, dpr + 0.25); renderer.setPixelRatio(dpr); W.fast = 0; }
+}
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.shadowMap.autoUpdate = false; // updated once per frame, not again for the mirror pass
@@ -989,7 +1003,9 @@ const festScreenMat = new THREE.ShaderMaterial({
     void main(){
       vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0) * 2.0;
       float bt = uBeat, bs = floor(bt), fr = fract(bt);
-      vec3 col;
+      vec3 col = vec3(0.0);
+      // The generative looks are the costly part (a fractal loop per pixel): skipped while a still covers the screen
+      if (uArtMix > 0.98 && uCamMix < 0.01) {} else
       if (uMode < 0.5) {            // kaleidoscopic fractal, rotates a notch every beat
         float a = bs * 0.3927; vec2 z = mat2(cos(a), -sin(a), sin(a), cos(a)) * p * (1.1 - 0.12 * uPulse);
         float acc = 0.0;
@@ -1123,14 +1139,14 @@ const festCrowd = (() => {
   // carries their own colour per part (see crowdMat), so clothes vary without extra meshes or draw calls.
   const tag = (k, ...gs) => gs.map(g => { g.setAttribute('part', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count).fill(k), 1)); return g; });
   // Hands are built hanging down from the wrist at the origin, then turned to carry on from the arm.
-  const fist = () => tag(0, new THREE.SphereGeometry(0.046, 8, 6).scale(1, 1.1, 0.85).translate(0, -0.045, 0));
+  const fist = () => tag(0, new THREE.SphereGeometry(0.046, 5, 4).scale(1, 1.1, 0.85).translate(0, -0.045, 0));
   const open = thumb => tag(0, new THREE.BoxGeometry(0.085, 0.095, 0.025).translate(0, -0.05, 0),
     ...[-0.03, -0.01, 0.01, 0.03].map((fx, k) => new THREE.CylinderGeometry(0.01, 0.009, 0.075, 5).translate(0, -0.0375, 0)
       .rotateZ((k - 1.5) * 0.12).translate(fx, -0.095, 0)),
     new THREE.CylinderGeometry(0.011, 0.01, 0.06, 5).translate(0, -0.03, 0).rotateZ(0.8 * thumb).translate(0.04 * thumb, -0.03, 0));
   // An arm from the shoulder at (x0, y0), at angle `ang` from straight down, with a hand on the end
   const ARM = 0.64, tip = (x0, y0, ang) => [x0 + Math.sin(ang) * ARM, y0 - Math.cos(ang) * ARM];
-  const arm = (x0, y0, ang, hand) => [...tag(3, part(new THREE.CylinderGeometry(0.05, 0.04, ARM, 7), x0 + Math.sin(ang) * ARM / 2, y0 - Math.cos(ang) * ARM / 2, ang)),
+  const arm = (x0, y0, ang, hand) => [...tag(3, part(new THREE.CylinderGeometry(0.05, 0.04, ARM, 5, 1, true), x0 + Math.sin(ang) * ARM / 2, y0 - Math.cos(ang) * ARM / 2, ang)),
     ...hand.map(g => g.rotateZ(ang).translate(...tip(x0, y0, ang), 0))];
   // A raised arm, bent at the elbow: the upper arm reaches out and up, the forearm closer to vertical
   const raised = (side, hand) => {
@@ -1141,17 +1157,17 @@ const festCrowd = (() => {
       ...hand.map(g => g.rotateZ(a2).translate(hx, hy, 0))];
   };
   const body = () => [
-    ...tag(2, part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), -0.09, 0.43), part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 7), 0.09, 0.43)),
+    ...tag(2, part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 5, 1, true), -0.09, 0.43), part(new THREE.CylinderGeometry(0.075, 0.055, 0.86, 5, 1, true), 0.09, 0.43)),
     // torso: one turned profile from the hips through the waist and chest, rounding over the shoulders into the neck
     ...tag(1, part(new THREE.LatheGeometry([[0.001, 0.84], [0.15, 0.85], [0.16, 0.95], [0.148, 1.08], [0.18, 1.26], [0.2, 1.37], [0.185, 1.44], [0.13, 1.5], [0.06, 1.53], [0.001, 1.535]]
-      .map(([r, y]) => new THREE.Vector2(r, y)), 12), 0, 0, 0, 1, 0.62),
-      new THREE.SphereGeometry(0.068, 8, 6).scale(1, 0.9, 0.85).translate(-0.205, 1.43, 0), new THREE.SphereGeometry(0.068, 8, 6).scale(1, 0.9, 0.85).translate(0.205, 1.43, 0)), // shoulders
-    ...tag(0, part(new THREE.CylinderGeometry(0.05, 0.055, 0.12, 7), 0, 1.52),                                   // neck
-      part(new THREE.SphereGeometry(0.105, 10, 8).scale(0.9, 1.12, 1), 0, 1.66))];                                // head
+      .map(([r, y]) => new THREE.Vector2(r, y)), 8), 0, 0, 0, 1, 0.62),
+      new THREE.SphereGeometry(0.068, 6, 4).scale(1, 0.9, 0.85).translate(-0.205, 1.43, 0), new THREE.SphereGeometry(0.068, 6, 4).scale(1, 0.9, 0.85).translate(0.205, 1.43, 0)), // shoulders
+    ...tag(0, part(new THREE.CylinderGeometry(0.05, 0.055, 0.12, 5, 1, true), 0, 1.52),                                   // neck
+      part(new THREE.SphereGeometry(0.105, 8, 6).scale(0.9, 1.12, 1), 0, 1.66))];                                // head
   // Hair, one instanced mesh per style, sitting on the head (the face is at -z): short, long down the back, a bun,
   // curly volume, a cap. About one in ten people are bald.
   // Hair is tilted back on the head (high hairline at the front, low at the nape) so it reads as hair, not a cap
-  const cap = (r, th, sx = 0.92, sy = 1.12, tilt = 0.5) => new THREE.SphereGeometry(r, 12, 7, 0, Math.PI * 2, 0, Math.PI * th).rotateX(tilt).scale(sx, sy, 1.04).translate(0, 1.668, 0.01);
+  const cap = (r, th, sx = 0.92, sy = 1.12, tilt = 0.5) => new THREE.SphereGeometry(r, 9, 5, 0, Math.PI * 2, 0, Math.PI * th).rotateX(tilt).scale(sx, sy, 1.04).translate(0, 1.668, 0.01);
   const curls = (() => { const g = new THREE.IcosahedronGeometry(0.135, 1), v = g.attributes.position; // lumpy volume
     for (let i = 0; i < v.count; i++) { const k = 1 + 0.12 * Math.sin(v.getX(i) * 61 + v.getY(i) * 47 + v.getZ(i) * 53); v.setXYZ(i, v.getX(i) * k, v.getY(i) * k, v.getZ(i) * k); }
     g.computeVertexNormals(); return g.scale(0.95, 0.95, 1).translate(0, 1.7, 0.02); })();
@@ -4073,6 +4089,7 @@ renderer.setAnimationLoop(() => {
   try { frame(); } catch (e) { if (!frameErrors.has(e.message)) { frameErrors.add(e.message); console.error(e); } }
 });
 function frame() {
+  watchFps(performance.now());
   const beat = nowBeat();
   const bi = Math.floor(beat), frac = beat - bi;
   const dt0 = Math.min(0.1, (performance.now() - lastPulseT) / 1000); lastPulseT = performance.now();
