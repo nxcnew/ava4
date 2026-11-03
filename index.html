@@ -916,7 +916,7 @@ const sparkles = (() => {
 
 /* --- Festival main stage: a performance stage, crowd in front, LED wall with generative art, speakers, lasers, beams,
        strobes, flame jets and fireworks. Everything decorative is cheap: basic additive materials and one instanced crowd. --- */
-const FEST_DECK_TOP = -0.04, FEST_GROUND = -1.6;
+const FEST_DECK_TOP = -0.04, FEST_GROUND = -1.6, FRONT_Z = 4.45; // FRONT_Z: the row of monitors and pyro along the stage's front edge
 const festStrips = []; // LED edges that change colour with the music
 function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: PALETTE_HEX[ix % 4] })); m.position.set(...pos); if (rot) m.rotation.set(...rot); m.userData.ix = ix; festG.add(m); festStrips.push(m); return m; }
 (() => {
@@ -1156,7 +1156,7 @@ for (let i = 0; i < 16; i++) {
 const strobes = Array.from({ length: 8 }, (_, i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), additive(0xffffff, 0)); m.position.set((i - 3.5) * 3.2, 10.0, 3.4); festG.add(m); return m; });
 // Front edge of the stage: a row of low wedge monitors (below knee height), with flame machines in some of the gaps
 // and spark fountains in others. All pyro comes out of these machines.
-const FRONT_Z = 4.45, FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10.4];
+const FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10.4];
 (() => {
   const cab = new THREE.MeshStandardMaterial({ color: 0x0c0c11, roughness: 0.55, metalness: 0.35 });
   // Wedge monitor: a side profile, extruded across; tall at the audience side, its sloping face aimed at the performers
@@ -1351,7 +1351,7 @@ function festUpdate(beat, pulse, dt, t) {
   // Show cues: only in the song's punchy sections (see `punch` in songAnalysis), every 4 bars from the section's
   // first downbeat while the beat holds. Each section is either pyro (every flame, the spark fountains, fireworks)
   // or a full laser show; they alternate, starting at random.
-  const sec = punchAt(beat);
+  const spb = 60 / Math.max(60, clock.bpm), sec = punchAt(beat);
   if (sec && sec !== festSec) { festSec = sec; festSecN++; sec.mode = (festSecN + festSecSeed) % 2 ? 'lasers' : 'pyro'; }
   const inSec = sec && groove, hitBar = inSec && mod(bar - sec.bar0, 4) === 0;
   if (inSec && k !== pyroBeat && fr < 0.25) {
