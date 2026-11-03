@@ -1,0 +1,2555 @@
+{
+ "avatars": {
+  "Amber.fbx": {
+   "size": 32362444
+  },
+  "Andy.fbx": {
+   "size": 10270092
+  },
+  "Bob.fbx": {
+   "size": 9970993
+  },
+  "David.fbx": {
+   "size": 8702013
+  },
+  "Janine.fbx": {
+   "size": 11187933
+  },
+  "Joey.fbx": {
+   "size": 8625840
+  },
+  "Josh.fbx": {
+   "size": 10005308
+  },
+  "Justin.fbx": {
+   "size": 10267241
+  },
+  "Lewis.fbx": {
+   "size": 8397495
+  },
+  "Liz.fbx": {
+   "size": 7443995
+  },
+  "Matt.fbx": {
+   "size": 9077519
+  },
+  "Michelle.fbx": {
+   "size": 2434999
+  },
+  "Roth.fbx": {
+   "size": 8105502
+  },
+  "Suzie.fbx": {
+   "size": 7252790
+  },
+  "Zod.fbx": {
+   "size": 9833114
+  }
+ },
+ "crowd": {
+  "crowd - Bored.fbx": {
+   "size": 1154192
+  },
+  "crowd - Breathing Idle.fbx": {
+   "size": 1104592
+  },
+  "crowd - Cheering.fbx": {
+   "size": 498656
+  },
+  "crowd - Clapping 1.fbx": {
+   "size": 350976
+  },
+  "crowd - Clapping 2.fbx": {
+   "size": 350976
+  },
+  "crowd - Excited.fbx": {
+   "size": 822576
+  },
+  "crowd - Fist Pump.fbx": {
+   "size": 689904
+  },
+  "crowd - Happy Idle 1.fbx": {
+   "size": 485792
+  },
+  "crowd - Happy Idle 2.fbx": {
+   "size": 585296
+  },
+  "crowd - Idle 1.fbx": {
+   "size": 785040
+  },
+  "crowd - Idle 2.fbx": {
+   "size": 460768
+  },
+  "crowd - Look Around.fbx": {
+   "size": 624080
+  },
+  "crowd - Rapping.fbx": {
+   "size": 951312
+  },
+  "crowd - Standing Cheering.fbx": {
+   "size": 644624
+  },
+  "crowd - Standing Clap 1.fbx": {
+   "size": 659664
+  },
+  "crowd - Standing Clap 2.fbx": {
+   "size": 702832
+  }
+ },
+ "dances": {
+  "Arms Hip Hop Dance 01.fbx": {
+   "size": 1978512
+  },
+  "Bboy Hip Hop Move 01.fbx": {
+   "size": 494208
+  },
+  "Bboy Hip Hop Move 02.fbx": {
+   "size": 479312
+  },
+  "Bboy Uprock 01.fbx": {
+   "size": 519808
+  },
+  "Booty Hip Hop Dance 01.fbx": {
+   "size": 677552
+  },
+  "Breakdance 1990 01.fbx": {
+   "size": 541424
+  },
+  "Breakdance 1990 02.fbx": {
+   "size": 659392
+  },
+  "Breakdance 1990 03.fbx": {
+   "size": 405584
+  },
+  "Breakdance Ending 1 01.fbx": {
+   "size": 843264
+  },
+  "Breakdance Ending 2 01.fbx": {
+   "size": 973328
+  },
+  "Breakdance Ending 3 01.fbx": {
+   "size": 834768
+  },
+  "Breakdance Footwork 1 01.fbx": {
+   "size": 619728
+  },
+  "Breakdance Footwork 2 01.fbx": {
+   "size": 440432
+  },
+  "Breakdance Footwork 3 01.fbx": {
+   "size": 678192
+  },
+  "Breakdance Freeze Var 1 01.fbx": {
+   "size": 727712
+  },
+  "Breakdance Freeze Var 2 01.fbx": {
+   "size": 700624
+  },
+  "Breakdance Freeze Var 3 01.fbx": {
+   "size": 813120
+  },
+  "Breakdance Freezes 01.fbx": {
+   "size": 866208
+  },
+  "Breakdance Swipes 01.fbx": {
+   "size": 600064
+  },
+  "Breakdance Uprock 01.fbx": {
+   "size": 497136
+  },
+  "Breakdance Uprock 02.fbx": {
+   "size": 667232
+  },
+  "Breakdance Uprock Var 1 01.fbx": {
+   "size": 498384
+  },
+  "Breakdance Uprock Var 2 01.fbx": {
+   "size": 740000
+  },
+  "Breakdance Uprock.fbx": {
+   "size": 735264
+  },
+  "Brooklyn Uprock 01.fbx": {
+   "size": 700624
+  },
+  "Dancing 01.fbx": {
+   "size": 1623008
+  },
+  "Dancing 02.fbx": {
+   "size": 1234240
+  },
+  "Dancing 03.fbx": {
+   "size": 730352
+  },
+  "Dancing 04.fbx": {
+   "size": 1934128
+  },
+  "Dancing 05.fbx": {
+   "size": 506416
+  },
+  "Dancing 06.fbx": {
+   "size": 775904
+  },
+  "Dancing Maraschino Step 01.fbx": {
+   "size": 626432
+  },
+  "Dancing Running Man 01.fbx": {
+   "size": 1204720
+  },
+  "Dancing Twerk 01.fbx": {
+   "size": 1541760
+  },
+  "Flair 01.fbx": {
+   "size": 447984
+  },
+  "Flair 02.fbx": {
+   "size": 540976
+  },
+  "Flair 03.fbx": {
+   "size": 375712
+  },
+  "Head Spinning 01.fbx": {
+   "size": 325728
+  },
+  "Hip Hop Dancing 01.fbx": {
+   "size": 717232
+  },
+  "Hip Hop Dancing 02.fbx": {
+   "size": 777136
+  },
+  "Hip Hop Dancing 03.fbx": {
+   "size": 1209920
+  },
+  "Hip Hop Dancing 04.fbx": {
+   "size": 1523920
+  },
+  "Hip Hop Dancing 05.fbx": {
+   "size": 1466768
+  },
+  "Hip Hop Dancing 06.fbx": {
+   "size": 1707616
+  },
+  "Hip Hop Dancing 07.fbx": {
+   "size": 584192
+  },
+  "Hip Hop Dancing 08.fbx": {
+   "size": 635376
+  },
+  "Hip Hop Dancing 09.fbx": {
+   "size": 1486608
+  },
+  "Hip Hop Dancing 10.fbx": {
+   "size": 1679776
+  },
+  "Hip Hop Dancing 11.fbx": {
+   "size": 564416
+  },
+  "Hip Hop Dancing 12.fbx": {
+   "size": 547216
+  },
+  "Hip Hop Dancing 13.fbx": {
+   "size": 1406976
+  },
+  "Hip Hop Dancing 14.fbx": {
+   "size": 737792
+  },
+  "Hip Hop Dancing 15.fbx": {
+   "size": 1414384
+  },
+  "Hip Hop Dancing 16.fbx": {
+   "size": 617072
+  },
+  "Hip Hop Dancing 17.fbx": {
+   "size": 1257920
+  },
+  "Hip Hop Dancing.fbx": {
+   "size": 15421078
+  },
+  "House Dancing 01.fbx": {
+   "size": 2437712
+  },
+  "House Dancing 02.fbx": {
+   "size": 1923520
+  },
+  "House Dancing 03.fbx": {
+   "size": 1946528
+  },
+  "Locking Hip Hop Dance 01.fbx": {
+   "size": 1605488
+  },
+  "Robot Hip Hop Dance 01.fbx": {
+   "size": 1525984
+  },
+  "Robot Hip Hop Dance.fbx": {
+   "size": 2697744
+  },
+  "Shopping Cart Dance 01.fbx": {
+   "size": 1516256
+  },
+  "Shuffling 01.fbx": {
+   "size": 923952
+  },
+  "Shuffling.fbx": {
+   "size": 1394768
+  },
+  "Slide Hip Hop Dance 01.fbx": {
+   "size": 1619520
+  },
+  "Snake Hip Hop Dance 01.fbx": {
+   "size": 1393840
+  },
+  "Step Hip Hop Dance 01.fbx": {
+   "size": 752192
+  },
+  "Tut Hip Hop Dance 01.fbx": {
+   "size": 1589920
+  },
+  "Tut Hip Hop Dance 02.fbx": {
+   "size": 1234672
+  },
+  "Tut Hip Hop Dance.fbx": {
+   "size": 2833760
+  },
+  "Wave Hip Hop Dance 01.fbx": {
+   "size": 1518752
+  },
+  "Wave Hip Hop Dance 02.fbx": {
+   "size": 1603712
+  },
+  "Wave Hip Hop Dance 03.fbx": {
+   "size": 383728
+  },
+  "Wave Hip Hop Dance.fbx": {
+   "size": 2859600
+  }
+ },
+ "songs": {
+  "22 - Sorry Babe (661e798b).m4a": {
+   "size": 2703909
+  },
+  "All This Thunder.mp3": {
+   "size": 6047280
+  },
+  "Ashes in the Kitchen.mp3": {
+   "size": 5485974
+  },
+  "Be Still.mp3": {
+   "size": 11413147
+  },
+  "Just a Door.mp3": {
+   "size": 4037670
+  },
+  "Loop Runner.mp3": {
+   "size": 4910166
+  },
+  "Nothing Answers Back.mp3": {
+   "size": 3564216
+  },
+  "Nothing Hurts Here (2).mp3": {
+   "size": 11599501
+  },
+  "The Quiet I Forgot.mp3": {
+   "size": 5788638
+  },
+  "The Quite... Mixed.mp3": {
+   "size": 6849277
+  },
+  "The Shape [Bollywood].mp3": {
+   "size": 5972690
+  },
+  "Wake the Man Up.mp3": {
+   "size": 3722706
+  },
+  "Watch Me.mp3": {
+   "size": 2045784
+  },
+  "Whatever This Is.mp3": {
+   "size": 5892630
+  },
+  "\u0101k\u0101ro'ham (2).mp3": {
+   "size": 4857288
+  }
+ },
+ "walks": {
+  "walk - Catwalk Walk Forward.fbx": {
+   "size": 395072
+  },
+  "walk - Happy Walk.fbx": {
+   "size": 383728
+  },
+  "walk - Slide Hip Hop Walk.fbx": {
+   "size": 362352
+  },
+  "walk - Strut Walking.fbx": {
+   "size": 375088
+  },
+  "walk - Swagger Walk.fbx": {
+   "size": 537200
+  },
+  "walk - Walking.fbx": {
+   "size": 362784
+  }
+ },
+ "walls": {
+  "Amber Rock Singer in Concert.jpg": {
+   "size": 508433,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.3878,
+    "y": 0.2021,
+    "l": 0.3605,
+    "faces": [
+     [
+      0.6004,
+      0.1052,
+      0.1323,
+      0.3527
+     ]
+    ]
+   }
+  },
+  "Celestial Ballet with Live Orchestra.jpg": {
+   "size": 624324,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.1787,
+    "y": -0.2784,
+    "l": 0.3448,
+    "faces": []
+   }
+  },
+  "Cinematic Silver Orchestral Rock Performance.jpg": {
+   "size": 684970,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0006,
+    "y": -0.0102,
+    "l": 0.5066,
+    "faces": [
+     [
+      0.3042,
+      0.0548,
+      0.0461,
+      0.1383
+     ],
+     [
+      0.0476,
+      0.5203,
+      0.03,
+      0.0901
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_01.jpg": {
+   "size": 136321,
+   "look": {
+    "aspect": 0.924,
+    "px": 552,
+    "x": -0.0424,
+    "y": -0.0886,
+    "l": 0.3967,
+    "faces": [
+     [
+      0.4318,
+      0.1151,
+      0.1978,
+      0.1827
+     ],
+     [
+      0.0517,
+      0.4867,
+      0.0756,
+      0.0699
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_02.jpg": {
+   "size": 120820,
+   "look": {
+    "aspect": 1.7,
+    "px": 651,
+    "x": -0.0103,
+    "y": -0.0518,
+    "l": 0.41,
+    "faces": [
+     [
+      0.4949,
+      0.0465,
+      0.1062,
+      0.1805
+     ],
+     [
+      0.1274,
+      0.3055,
+      0.0713,
+      0.1212
+     ],
+     [
+      0.8351,
+      0.3279,
+      0.0591,
+      0.1004
+     ],
+     [
+      0.2642,
+      0.4618,
+      0.0499,
+      0.0849
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_027.jpg": {
+   "size": 97053,
+   "look": {
+    "aspect": 0.924,
+    "px": 552,
+    "x": 0.0984,
+    "y": 0.0251,
+    "l": 0.1875,
+    "faces": [
+     [
+      0.2606,
+      0.0993,
+      0.1527,
+      0.1411
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_03.jpg": {
+   "size": 104885,
+   "look": {
+    "aspect": 0.922,
+    "px": 552,
+    "x": 0.1281,
+    "y": -0.0229,
+    "l": 0.2525,
+    "faces": [
+     [
+      0.4724,
+      0.0867,
+      0.0904,
+      0.0833
+     ],
+     [
+      0.9432,
+      0.3348,
+      0.0632,
+      0.0583
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_04.jpg": {
+   "size": 153760,
+   "look": {
+    "aspect": 1.631,
+    "px": 765,
+    "x": 0.1488,
+    "y": 0.0579,
+    "l": 0.305,
+    "faces": [
+     [
+      0.3072,
+      0.0988,
+      0.1147,
+      0.187
+     ],
+     [
+      0.5859,
+      0.213,
+      0.1158,
+      0.1888
+     ]
+    ]
+   }
+  },
+  "Cinematic_Concert_and_Dance_Performances_05.jpg": {
+   "size": 170224,
+   "look": {
+    "aspect": 1.635,
+    "px": 767,
+    "x": -0.0406,
+    "y": -0.0951,
+    "l": 0.4096,
+    "faces": [
+     [
+      0.473,
+      0.0668,
+      0.0893,
+      0.146
+     ],
+     [
+      0.1565,
+      0.3406,
+      0.0762,
+      0.1246
+     ],
+     [
+      0.9008,
+      0.2348,
+      0.0863,
+      0.1411
+     ],
+     [
+      0.0207,
+      0.456,
+      0.0574,
+      0.0938
+     ]
+    ]
+   }
+  },
+  "Cinematic_Stage_Performances_Collage_01.jpg": {
+   "size": 90747,
+   "look": {
+    "aspect": 1.65,
+    "px": 655,
+    "x": -0.1812,
+    "y": -0.1333,
+    "l": 0.3978,
+    "faces": [
+     [
+      0.457,
+      0.1101,
+      0.1789,
+      0.2952
+     ]
+    ]
+   }
+  },
+  "Cinematic_Stage_Performances_Collage_02.jpg": {
+   "size": 81843,
+   "look": {
+    "aspect": 1.65,
+    "px": 655,
+    "x": 0.1213,
+    "y": 0.0093,
+    "l": 0.3342,
+    "faces": [
+     [
+      0.5233,
+      0.1087,
+      0.1257,
+      0.2073
+     ]
+    ]
+   }
+  },
+  "Cinematic_Stage_Performances_Collage_03.jpg": {
+   "size": 98261,
+   "look": {
+    "aspect": 1.65,
+    "px": 655,
+    "x": 0.1343,
+    "y": 0.0286,
+    "l": 0.3108,
+    "faces": [
+     [
+      0.3958,
+      0.1403,
+      0.1027,
+      0.1695
+     ],
+     [
+      0.5502,
+      0.1903,
+      0.0952,
+      0.157
+     ],
+     [
+      0.8452,
+      0.5801,
+      0.077,
+      0.1271
+     ],
+     [
+      0.0665,
+      0.712,
+      0.0586,
+      0.0967
+     ]
+    ]
+   }
+  },
+  "Cinematic_Stage_Performances_Collage_04.jpg": {
+   "size": 118765,
+   "look": {
+    "aspect": 1.65,
+    "px": 655,
+    "x": 0.0175,
+    "y": -0.0349,
+    "l": 0.4314,
+    "faces": [
+     [
+      0.5052,
+      0.0682,
+      0.0972,
+      0.1604
+     ],
+     [
+      0.7659,
+      0.475,
+      0.062,
+      0.1023
+     ],
+     [
+      0.9505,
+      0.5388,
+      0.0611,
+      0.1009
+     ],
+     [
+      0.0354,
+      0.5468,
+      0.0512,
+      0.0844
+     ],
+     [
+      0.1475,
+      0.452,
+      0.06,
+      0.099
+     ]
+    ]
+   }
+  },
+  "Cinematic_Stage_Performances_Collage_05.jpg": {
+   "size": 188930,
+   "look": {
+    "aspect": 3.272,
+    "px": 1312,
+    "x": -0.115,
+    "y": -0.1059,
+    "l": 0.4828,
+    "faces": []
+   }
+  },
+  "Cinematic_concert_performance_collage_01.jpg": {
+   "size": 98225,
+   "look": {
+    "aspect": 1.002,
+    "px": 521,
+    "x": 0.0908,
+    "y": -0.0055,
+    "l": 0.388,
+    "faces": [
+     [
+      0.3019,
+      0.1288,
+      0.3514,
+      0.3521
+     ]
+    ]
+   }
+  },
+  "Cinematic_concert_performance_collage_02.jpg": {
+   "size": 89864,
+   "look": {
+    "aspect": 0.967,
+    "px": 520,
+    "x": 0.1421,
+    "y": 0.0278,
+    "l": 0.3,
+    "faces": [
+     [
+      0.4282,
+      0.115,
+      0.148,
+      0.1432
+     ]
+    ]
+   }
+  },
+  "Cinematic_concert_performance_collage_03.jpg": {
+   "size": 93179,
+   "look": {
+    "aspect": 0.981,
+    "px": 520,
+    "x": 0.1605,
+    "y": -0.0556,
+    "l": 0.2969,
+    "faces": [
+     [
+      0.5167,
+      0.1052,
+      0.1158,
+      0.1135
+     ],
+     [
+      0.0969,
+      0.3987,
+      0.0724,
+      0.071
+     ],
+     [
+      0.9143,
+      0.3861,
+      0.0792,
+      0.0777
+     ]
+    ]
+   }
+  },
+  "Cinematic_concert_performance_collage_04.jpg": {
+   "size": 94932,
+   "look": {
+    "aspect": 1.036,
+    "px": 521,
+    "x": 0.0829,
+    "y": -0.0056,
+    "l": 0.2964,
+    "faces": [
+     [
+      0.6379,
+      0.2771,
+      0.118,
+      0.1222
+     ],
+     [
+      0.2958,
+      0.1591,
+      0.132,
+      0.1367
+     ]
+    ]
+   }
+  },
+  "Cinematic_concert_performance_collage_05.jpg": {
+   "size": 92851,
+   "look": {
+    "aspect": 1.0,
+    "px": 503,
+    "x": -0.1068,
+    "y": -0.1192,
+    "l": 0.3352,
+    "faces": [
+     [
+      0.0676,
+      0.4749,
+      0.0591,
+      0.0591
+     ],
+     [
+      0.2068,
+      0.4245,
+      0.0656,
+      0.0656
+     ],
+     [
+      0.4499,
+      0.2085,
+      0.0737,
+      0.0737
+     ],
+     [
+      0.8877,
+      0.3906,
+      0.0644,
+      0.0644
+     ]
+    ]
+   }
+  },
+  "Cinematic_concert_performance_collage_06.jpg": {
+   "size": 99111,
+   "look": {
+    "aspect": 1.014,
+    "px": 510,
+    "x": 0.0332,
+    "y": -0.0494,
+    "l": 0.3583,
+    "faces": [
+     [
+      0.3976,
+      0.1398,
+      0.2402,
+      0.2435
+     ]
+    ]
+   }
+  },
+  "DJ Booth at a Neon Festival-2.jpg": {
+   "size": 787327,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0405,
+    "y": -0.2359,
+    "l": 0.3991,
+    "faces": [
+     [
+      0.2,
+      0.2321,
+      0.0421,
+      0.1264
+     ]
+    ]
+   }
+  },
+  "Dynamic Concert Performance Diva.jpg": {
+   "size": 484042,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0457,
+    "y": -0.0612,
+    "l": 0.5778,
+    "faces": [
+     [
+      0.4343,
+      0.064,
+      0.0786,
+      0.118
+     ]
+    ]
+   }
+  },
+  "Ecstatic Drummer Under Concert Lights.jpg": {
+   "size": 539950,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.043,
+    "y": -0.011,
+    "l": 0.5065,
+    "faces": [
+     [
+      0.4573,
+      0.0576,
+      0.1027,
+      0.274
+     ]
+    ]
+   }
+  },
+  "Electric Dreams_ A Neon Rock Concert.jpg": {
+   "size": 693170,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.217,
+    "y": -0.3158,
+    "l": 0.3624,
+    "faces": []
+   }
+  },
+  "Electrifying Drummer Under Purple Lights.jpg": {
+   "size": 655968,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0582,
+    "y": -0.2386,
+    "l": 0.3637,
+    "faces": [
+     [
+      0.28,
+      0.0531,
+      0.0629,
+      0.1886
+     ]
+    ]
+   }
+  },
+  "Emerald Rock Symphony Under a Teal Moon-2.jpg": {
+   "size": 591211,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.1872,
+    "y": 0.0561,
+    "l": 0.2538,
+    "faces": [
+     [
+      0.3418,
+      0.036,
+      0.0565,
+      0.1694
+     ]
+    ]
+   }
+  },
+  "Emerald Sequins Under Spotlight.jpg": {
+   "size": 560433,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.0243,
+    "y": -0.0451,
+    "l": 0.3752,
+    "faces": [
+     [
+      0.3294,
+      0.0737,
+      0.2046,
+      0.2046
+     ]
+    ]
+   }
+  },
+  "Emerald Teal Drummer in Concert-1.jpg": {
+   "size": 699603,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.1778,
+    "y": 0.0799,
+    "l": 0.2896,
+    "faces": [
+     [
+      0.2813,
+      0.0381,
+      0.0643,
+      0.193
+     ]
+    ]
+   }
+  },
+  "Energetic Guitarist Under Teal Stage Lights.jpg": {
+   "size": 430846,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.2373,
+    "y": -0.0435,
+    "l": 0.2802,
+    "faces": [
+     [
+      0.4548,
+      0.0541,
+      0.0663,
+      0.0994
+     ]
+    ]
+   }
+  },
+  "Fiery Taiko Drummer on Stage.jpg": {
+   "size": 445140,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.1438,
+    "y": -0.0272,
+    "l": 0.3527,
+    "faces": [
+     [
+      0.4726,
+      0.0791,
+      0.0982,
+      0.2619
+     ],
+     [
+      0.0532,
+      0.3087,
+      0.0481,
+      0.1281
+     ]
+    ]
+   }
+  },
+  "Flashy_Concert_Performances_Montage_01.jpg": {
+   "size": 78382,
+   "look": {
+    "aspect": 2.207,
+    "px": 766,
+    "x": -0.0937,
+    "y": -0.0985,
+    "l": 0.3327,
+    "faces": [
+     [
+      0.4737,
+      0.1108,
+      0.1643,
+      0.3627
+     ]
+    ]
+   }
+  },
+  "Flashy_Concert_Performances_Montage_02.jpg": {
+   "size": 82651,
+   "look": {
+    "aspect": 2.205,
+    "px": 765,
+    "x": 0.1871,
+    "y": 0.0701,
+    "l": 0.3023,
+    "faces": [
+     [
+      0.4358,
+      0.1222,
+      0.1233,
+      0.2718
+     ]
+    ]
+   }
+  },
+  "Flashy_Concert_Performances_Montage_03.jpg": {
+   "size": 91592,
+   "look": {
+    "aspect": 2.24,
+    "px": 766,
+    "x": 0.079,
+    "y": -0.0743,
+    "l": 0.3146,
+    "faces": [
+     [
+      0.4922,
+      0.1046,
+      0.0833,
+      0.1867
+     ],
+     [
+      0.0279,
+      0.5857,
+      0.0591,
+      0.1325
+     ],
+     [
+      0.9043,
+      0.4971,
+      0.0626,
+      0.1401
+     ]
+    ]
+   }
+  },
+  "Flashy_Concert_Performances_Montage_04.jpg": {
+   "size": 89455,
+   "look": {
+    "aspect": 2.237,
+    "px": 765,
+    "x": 0.0801,
+    "y": -0.0048,
+    "l": 0.2921,
+    "faces": [
+     [
+      0.6503,
+      0.1965,
+      0.0789,
+      0.1765
+     ],
+     [
+      0.3178,
+      0.0931,
+      0.0746,
+      0.1669
+     ]
+    ]
+   }
+  },
+  "Flashy_Concert_Performances_Montage_05.jpg": {
+   "size": 186436,
+   "look": {
+    "aspect": 4.697,
+    "px": 1536,
+    "x": -0.1513,
+    "y": -0.1178,
+    "l": 0.3825,
+    "faces": []
+   }
+  },
+  "Gatsby Jazz Ensemble on Stage.jpg": {
+   "size": 702972,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.1288,
+    "y": -0.2661,
+    "l": 0.3369,
+    "faces": []
+   }
+  },
+  "Gilded Bass Queen on Stage.jpg": {
+   "size": 617976,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.2327,
+    "y": 0.1107,
+    "l": 0.4164,
+    "faces": [
+     [
+      0.441,
+      0.044,
+      0.059,
+      0.0885
+     ]
+    ]
+   }
+  },
+  "Glamorous Blue Gown on Stage.jpg": {
+   "size": 463327,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.1661,
+    "y": 0.0444,
+    "l": 0.4211,
+    "faces": [
+     [
+      0.405,
+      0.1656,
+      0.2249,
+      0.2249
+     ]
+    ]
+   }
+  },
+  "Glamorous Blue-Violet Concert Performance.jpg": {
+   "size": 613712,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.1927,
+    "y": -0.2948,
+    "l": 0.3574,
+    "faces": [
+     [
+      0.4484,
+      0.0458,
+      0.0607,
+      0.0911
+     ]
+    ]
+   }
+  },
+  "Glamorous Golden Rock Guitarist.jpg": {
+   "size": 509849,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.2273,
+    "y": 0.1137,
+    "l": 0.3878,
+    "faces": [
+     [
+      0.4236,
+      0.0747,
+      0.1271,
+      0.3388
+     ]
+    ]
+   }
+  },
+  "Glamorous Guitarist Under Concert Lights-2.jpg": {
+   "size": 512930,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.0011,
+    "y": -0.0345,
+    "l": 0.5424,
+    "faces": [
+     [
+      0.4457,
+      0.0354,
+      0.1138,
+      0.3034
+     ]
+    ]
+   }
+  },
+  "Glamorous Latin Dance Under Golden Lights.jpg": {
+   "size": 418312,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.4209,
+    "y": 0.1987,
+    "l": 0.3841,
+    "faces": [
+     [
+      0.3393,
+      0.1342,
+      0.1264,
+      0.337
+     ]
+    ]
+   }
+  },
+  "Glamorous Magenta Pop Concert Performance-2.jpg": {
+   "size": 419171,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.2582,
+    "y": -0.2053,
+    "l": 0.3228,
+    "faces": [
+     [
+      0.4259,
+      0.0801,
+      0.058,
+      0.087
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Beneath Golden Stage Lights.jpg": {
+   "size": 583461,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.092,
+    "y": -0.0261,
+    "l": 0.461,
+    "faces": [
+     [
+      0.4921,
+      0.1278,
+      0.1216,
+      0.1216
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Under Concert Lights (1).jpg": {
+   "size": 484310,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.0413,
+    "y": -0.0654,
+    "l": 0.3654,
+    "faces": [
+     [
+      0.4727,
+      0.0767,
+      0.2096,
+      0.2096
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Under Concert Lights (2).jpg": {
+   "size": 548682,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.0671,
+    "y": -0.0445,
+    "l": 0.4686,
+    "faces": [
+     [
+      0.3974,
+      0.1343,
+      0.1958,
+      0.1958
+     ],
+     [
+      0.1101,
+      0.3864,
+      0.0903,
+      0.0903
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Under Concert Lights-1.jpg": {
+   "size": 400415,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.006,
+    "y": -0.0621,
+    "l": 0.5113,
+    "faces": [
+     [
+      0.4295,
+      0.1267,
+      0.1292,
+      0.3444
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Under Concert Lights.jpg": {
+   "size": 650858,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.0642,
+    "y": -0.0304,
+    "l": 0.4468,
+    "faces": [
+     [
+      0.3947,
+      0.0885,
+      0.2295,
+      0.2295
+     ],
+     [
+      0.0584,
+      0.4178,
+      0.0911,
+      0.0911
+     ]
+    ]
+   }
+  },
+  "Glamorous Singer Under Silver Stage Lights-1.jpg": {
+   "size": 608788,
+   "look": {
+    "aspect": 1.777,
+    "px": 1672,
+    "x": 0.0236,
+    "y": -0.0351,
+    "l": 0.497,
+    "faces": [
+     [
+      0.5141,
+      0.0629,
+      0.163,
+      0.2896
+     ]
+    ]
+   }
+  },
+  "Glamorous_Concert_and_Ballet_Moments_01.jpg": {
+   "size": 129235,
+   "look": {
+    "aspect": 1.37,
+    "px": 656,
+    "x": 0.0525,
+    "y": -0.0293,
+    "l": 0.4317,
+    "faces": [
+     [
+      0.4613,
+      0.0924,
+      0.222,
+      0.3041
+     ]
+    ]
+   }
+  },
+  "Glamorous_Concert_and_Ballet_Moments_02.jpg": {
+   "size": 85022,
+   "look": {
+    "aspect": 1.359,
+    "px": 651,
+    "x": -0.0221,
+    "y": -0.0372,
+    "l": 0.2454,
+    "faces": [
+     [
+      0.4311,
+      0.0916,
+      0.1834,
+      0.2493
+     ]
+    ]
+   }
+  },
+  "Glamorous_Concert_and_Ballet_Moments_03.jpg": {
+   "size": 101851,
+   "look": {
+    "aspect": 1.713,
+    "px": 656,
+    "x": 0.1125,
+    "y": -0.0115,
+    "l": 0.3286,
+    "faces": [
+     [
+      0.4031,
+      0.1784,
+      0.1581,
+      0.2708
+     ],
+     [
+      0.5256,
+      0.1537,
+      0.1336,
+      0.2289
+     ],
+     [
+      0.0302,
+      0.4389,
+      0.0877,
+      0.1502
+     ]
+    ]
+   }
+  },
+  "Glamorous_Concert_and_Ballet_Moments_05.jpg": {
+   "size": 121736,
+   "look": {
+    "aspect": 4.012,
+    "px": 1312,
+    "x": -0.0407,
+    "y": -0.0544,
+    "l": 0.3771,
+    "faces": [
+     [
+      0.4577,
+      0.0203,
+      0.0515,
+      0.2068
+     ],
+     [
+      0.79,
+      0.3453,
+      0.0376,
+      0.1507
+     ],
+     [
+      0.0611,
+      0.3132,
+      0.0371,
+      0.1489
+     ]
+    ]
+   }
+  },
+  "Glamorous_Singer_Beneath_Stage_Lights.jpg": {
+   "size": 603387,
+   "look": {
+    "aspect": 1.0,
+    "px": 1254,
+    "x": 0.0185,
+    "y": -0.0768,
+    "l": 0.4484,
+    "faces": [
+     [
+      0.45,
+      0.0826,
+      0.185,
+      0.185
+     ],
+     [
+      -0.0068,
+      0.5743,
+      0.0877,
+      0.0877
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_01.jpg": {
+   "size": 97453,
+   "look": {
+    "aspect": 1.002,
+    "px": 511,
+    "x": 0.1625,
+    "y": 0.0229,
+    "l": 0.4275,
+    "faces": [
+     [
+      0.369,
+      0.1386,
+      0.3506,
+      0.3513
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_02.jpg": {
+   "size": 110910,
+   "look": {
+    "aspect": 0.996,
+    "px": 510,
+    "x": 0.0308,
+    "y": -0.0532,
+    "l": 0.3152,
+    "faces": [
+     [
+      0.3469,
+      0.1453,
+      0.3344,
+      0.333
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_03.jpg": {
+   "size": 104059,
+   "look": {
+    "aspect": 0.992,
+    "px": 510,
+    "x": -0.1468,
+    "y": -0.1174,
+    "l": 0.4294,
+    "faces": [
+     [
+      0.4784,
+      0.1188,
+      0.0995,
+      0.0987
+     ],
+     [
+      0.1789,
+      0.4931,
+      0.0619,
+      0.0614
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_04.jpg": {
+   "size": 102801,
+   "look": {
+    "aspect": 1.004,
+    "px": 512,
+    "x": 0.118,
+    "y": 0.0047,
+    "l": 0.3374,
+    "faces": [
+     [
+      0.3193,
+      0.211,
+      0.2492,
+      0.2502
+     ],
+     [
+      0.4506,
+      0.1912,
+      0.2566,
+      0.2576
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_05.jpg": {
+   "size": 135612,
+   "look": {
+    "aspect": 0.996,
+    "px": 510,
+    "x": -0.0026,
+    "y": -0.1121,
+    "l": 0.3652,
+    "faces": [
+     [
+      0.4429,
+      0.073,
+      0.095,
+      0.0947
+     ],
+     [
+      0.8156,
+      0.2202,
+      0.0736,
+      0.0733
+     ],
+     [
+      0.1234,
+      0.199,
+      0.0756,
+      0.0753
+     ]
+    ]
+   }
+  },
+  "Glamorous_Stage_Performance_Portraits_06.jpg": {
+   "size": 98543,
+   "look": {
+    "aspect": 0.992,
+    "px": 510,
+    "x": -0.0885,
+    "y": -0.0862,
+    "l": 0.2595,
+    "faces": [
+     [
+      0.5367,
+      0.0911,
+      0.1974,
+      0.1959
+     ]
+    ]
+   }
+  },
+  "Golden Spotlight Singer.jpg": {
+   "size": 443113,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.4057,
+    "y": 0.2201,
+    "l": 0.4031,
+    "faces": [
+     [
+      0.3015,
+      0.1167,
+      0.1323,
+      0.3527
+     ]
+    ]
+   }
+  },
+  "Golden Veil Dance on Stage.jpg": {
+   "size": 474353,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.2887,
+    "y": 0.1321,
+    "l": 0.3852,
+    "faces": [
+     [
+      0.3865,
+      0.0894,
+      0.1244,
+      0.3317
+     ]
+    ]
+   }
+  },
+  "Golden-Hued Jazz Saxophonist.jpg": {
+   "size": 440321,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.3939,
+    "y": 0.1991,
+    "l": 0.3218,
+    "faces": [
+     [
+      0.6004,
+      0.1084,
+      0.1209,
+      0.3223
+     ]
+    ]
+   }
+  },
+  "Golden-Stage Singer in Concert.jpg": {
+   "size": 471705,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.1648,
+    "y": 0.086,
+    "l": 0.388,
+    "faces": [
+     [
+      0.4,
+      0.1007,
+      0.1691,
+      0.4511
+     ]
+    ]
+   }
+  },
+  "High-Energy Concert Dance Performance.jpg": {
+   "size": 463686,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0581,
+    "y": -0.0699,
+    "l": 0.5435,
+    "faces": [
+     [
+      0.3994,
+      0.0576,
+      0.075,
+      0.1125
+     ]
+    ]
+   }
+  },
+  "Joyful Drummer Under Concert Lights-2.jpg": {
+   "size": 564976,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0145,
+    "y": -0.0395,
+    "l": 0.5052,
+    "faces": [
+     [
+      0.4932,
+      0.1107,
+      0.1001,
+      0.1502
+     ]
+    ]
+   }
+  },
+  "Joyful Drummer Under Concert Lights.jpg": {
+   "size": 458477,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.0568,
+    "y": -0.1134,
+    "l": 0.3599,
+    "faces": [
+     [
+      0.4409,
+      0.0742,
+      0.1209,
+      0.3224
+     ]
+    ]
+   }
+  },
+  "Joyful Drummer in Golden Concert Light.jpg": {
+   "size": 468849,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.3897,
+    "y": 0.2014,
+    "l": 0.3502,
+    "faces": [
+     [
+      0.4185,
+      0.0887,
+      0.1257,
+      0.3351
+     ]
+    ]
+   }
+  },
+  "Joyful Singer Under Green Stage Lights.jpg": {
+   "size": 410438,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.1473,
+    "y": 0.0055,
+    "l": 0.289,
+    "faces": [
+     [
+      0.4415,
+      0.0671,
+      0.0625,
+      0.0938
+     ]
+    ]
+   }
+  },
+  "Magenta Drummer in Concert Glow.jpg": {
+   "size": 564475,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.3252,
+    "y": -0.1279,
+    "l": 0.3459,
+    "faces": [
+     [
+      0.4502,
+      0.0556,
+      0.104,
+      0.2774
+     ]
+    ]
+   }
+  },
+  "Magenta Lights, Powerful Performance-2.jpg": {
+   "size": 445541,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.2705,
+    "y": -0.2034,
+    "l": 0.324,
+    "faces": [
+     [
+      0.4164,
+      0.0565,
+      0.0689,
+      0.1034
+     ]
+    ]
+   }
+  },
+  "Magenta Pop Concert Performance.jpg": {
+   "size": 622938,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.2671,
+    "y": -0.1825,
+    "l": 0.4448,
+    "faces": [
+     [
+      0.4611,
+      0.0673,
+      0.0712,
+      0.2137
+     ],
+     [
+      0.2313,
+      0.4261,
+      0.0413,
+      0.1239
+     ],
+     [
+      0.6967,
+      0.4281,
+      0.0421,
+      0.1262
+     ],
+     [
+      0.084,
+      0.4129,
+      0.0414,
+      0.1241
+     ]
+    ]
+   }
+  },
+  "Magenta Punk Guitarist on Stage.jpg": {
+   "size": 499214,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.2617,
+    "y": -0.1923,
+    "l": 0.3278,
+    "faces": [
+     [
+      0.4277,
+      0.057,
+      0.0765,
+      0.1148
+     ]
+    ]
+   }
+  },
+  "Magenta Spotlight Singer Performing Live.jpg": {
+   "size": 455556,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.3121,
+    "y": -0.131,
+    "l": 0.3192,
+    "faces": [
+     [
+      0.444,
+      0.0602,
+      0.13,
+      0.3466
+     ]
+    ]
+   }
+  },
+  "Magenta Stage Queen in Motion-1.jpg": {
+   "size": 458012,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.3,
+    "y": -0.2266,
+    "l": 0.3305,
+    "faces": [
+     [
+      0.3687,
+      0.0951,
+      0.089,
+      0.1334
+     ]
+    ]
+   }
+  },
+  "Neon Blue Street Dance Show.jpg": {
+   "size": 624190,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.1711,
+    "y": -0.3071,
+    "l": 0.3242,
+    "faces": []
+   }
+  },
+  "Neon DJ Portrait in Concert Lights.jpg": {
+   "size": 458041,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.1779,
+    "y": -0.3451,
+    "l": 0.3386,
+    "faces": [
+     [
+      0.5689,
+      0.0995,
+      0.1268,
+      0.3381
+     ]
+    ]
+   }
+  },
+  "Neon Dance Ensemble on Stage.jpg": {
+   "size": 702928,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0653,
+    "y": -0.2281,
+    "l": 0.3793,
+    "faces": []
+   }
+  },
+  "Neon Festival DJ and Cosmic Stage-1.jpg": {
+   "size": 780681,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.033,
+    "y": -0.2774,
+    "l": 0.3403,
+    "faces": []
+   }
+  },
+  "Neon Pink Rapper on Stage.jpg": {
+   "size": 418655,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.201,
+    "y": -0.1782,
+    "l": 0.3155,
+    "faces": [
+     [
+      0.3633,
+      0.067,
+      0.0903,
+      0.1354
+     ]
+    ]
+   }
+  },
+  "Neon Pop Dance Spectacular.jpg": {
+   "size": 684211,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0264,
+    "y": -0.2252,
+    "l": 0.3555,
+    "faces": []
+   }
+  },
+  "Neon Triangle Girl Group Concert.jpg": {
+   "size": 646230,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0813,
+    "y": -0.2494,
+    "l": 0.4028,
+    "faces": [
+     [
+      0.4586,
+      0.0571,
+      0.0592,
+      0.1776
+     ],
+     [
+      0.6856,
+      0.314,
+      0.0396,
+      0.1189
+     ],
+     [
+      0.2632,
+      0.3077,
+      0.0399,
+      0.1197
+     ],
+     [
+      0.1052,
+      0.3247,
+      0.0366,
+      0.1098
+     ]
+    ]
+   }
+  },
+  "Neon Violinist in Concert.jpg": {
+   "size": 414805,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.1162,
+    "y": -0.2093,
+    "l": 0.3258,
+    "faces": [
+     [
+      0.4687,
+      0.1059,
+      0.115,
+      0.3066
+     ]
+    ]
+   }
+  },
+  "Neon Vortex Festival DJ-2.jpg": {
+   "size": 778944,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0446,
+    "y": -0.2817,
+    "l": 0.3646,
+    "faces": []
+   }
+  },
+  "Neon Warehouse Breakdance Battle.jpg": {
+   "size": 644315,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0019,
+    "y": -0.1733,
+    "l": 0.3525,
+    "faces": []
+   }
+  },
+  "Newsboy Ensemble Under City Lights.jpg": {
+   "size": 716268,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0025,
+    "y": -0.09,
+    "l": 0.3384,
+    "faces": [
+     [
+      0.484,
+      0.0934,
+      0.048,
+      0.1439
+     ],
+     [
+      0.2188,
+      0.4529,
+      0.0287,
+      0.0861
+     ],
+     [
+      0.6656,
+      0.4215,
+      0.0329,
+      0.0986
+     ]
+    ]
+   }
+  },
+  "Passionate Acoustic Concert Performance.jpg": {
+   "size": 485313,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.0551,
+    "y": -0.0765,
+    "l": 0.3622,
+    "faces": [
+     [
+      0.4738,
+      0.0618,
+      0.0853,
+      0.2275
+     ]
+    ]
+   }
+  },
+  "Passionate Guitarist Under Pink Stage Lights.jpg": {
+   "size": 508793,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.2994,
+    "y": -0.1155,
+    "l": 0.3242,
+    "faces": [
+     [
+      0.4264,
+      0.0684,
+      0.108,
+      0.2879
+     ]
+    ]
+   }
+  },
+  "Passionate Purple Ballroom Dip.jpg": {
+   "size": 712877,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0322,
+    "y": -0.2688,
+    "l": 0.4099,
+    "faces": [
+     [
+      0.4812,
+      0.1517,
+      0.0432,
+      0.1295
+     ],
+     [
+      0.4201,
+      0.2062,
+      0.0462,
+      0.1387
+     ]
+    ]
+   }
+  },
+  "Passionate Singer Under Purple Lights.jpg": {
+   "size": 509394,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.0332,
+    "y": -0.0926,
+    "l": 0.3287,
+    "faces": [
+     [
+      0.4462,
+      0.0441,
+      0.1286,
+      0.3429
+     ]
+    ]
+   }
+  },
+  "Passionate Singer Under Violet Stage Lights.jpg": {
+   "size": 384249,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.1442,
+    "y": -0.3117,
+    "l": 0.3221,
+    "faces": [
+     [
+      0.2914,
+      0.0736,
+      0.1485,
+      0.3959
+     ]
+    ]
+   }
+  },
+  "Platinum Blonde Singer in Teal Concert Glow.jpg": {
+   "size": 465989,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.152,
+    "y": -0.0038,
+    "l": 0.3094,
+    "faces": [
+     [
+      0.4385,
+      0.0787,
+      0.0849,
+      0.1274
+     ]
+    ]
+   }
+  },
+  "Platinum Rockstar Under Concert Lights.jpg": {
+   "size": 498631,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0298,
+    "y": -0.0576,
+    "l": 0.5608,
+    "faces": [
+     [
+      0.446,
+      0.0716,
+      0.0803,
+      0.1205
+     ]
+    ]
+   }
+  },
+  "Platinum Violinist Under Concert Lights.jpg": {
+   "size": 494325,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.0362,
+    "y": -0.0923,
+    "l": 0.3658,
+    "faces": [
+     [
+      0.4358,
+      0.0633,
+      0.1153,
+      0.3074
+     ]
+    ]
+   }
+  },
+  "Platinum Violinist on a Silver Stage.jpg": {
+   "size": 453463,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0713,
+    "y": -0.0774,
+    "l": 0.5373,
+    "faces": [
+     [
+      0.4518,
+      0.0531,
+      0.0652,
+      0.0977
+     ]
+    ]
+   }
+  },
+  "Pop Star Beneath Magenta Lights-1.jpg": {
+   "size": 440459,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.3076,
+    "y": -0.2307,
+    "l": 0.3947,
+    "faces": [
+     [
+      0.4646,
+      0.0662,
+      0.058,
+      0.087
+     ]
+    ]
+   }
+  },
+  "Red-Haired Bassist Under Pink Lights.jpg": {
+   "size": 463274,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": 0.1977,
+    "y": -0.1777,
+    "l": 0.3122,
+    "faces": [
+     [
+      0.446,
+      0.0397,
+      0.0645,
+      0.0968
+     ]
+    ]
+   }
+  },
+  "Rock Orchestra Under a Moonlit Stage.jpg": {
+   "size": 572141,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": -0.0955,
+    "y": -0.2327,
+    "l": 0.3622,
+    "faces": [
+     [
+      0.3447,
+      0.035,
+      0.0543,
+      0.1628
+     ]
+    ]
+   }
+  },
+  "Silver Spotlight Pop Concert.jpg": {
+   "size": 587013,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0325,
+    "y": -0.0106,
+    "l": 0.6062,
+    "faces": [
+     [
+      0.4634,
+      0.0686,
+      0.0711,
+      0.2134
+     ],
+     [
+      0.0833,
+      0.412,
+      0.0413,
+      0.1238
+     ],
+     [
+      0.2306,
+      0.4241,
+      0.0412,
+      0.1237
+     ],
+     [
+      0.8958,
+      0.4446,
+      0.04,
+      0.12
+     ],
+     [
+      0.6971,
+      0.4266,
+      0.0422,
+      0.1265
+     ]
+    ]
+   }
+  },
+  "Soulful Singer Under Purple Lights.jpg": {
+   "size": 429886,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.1514,
+    "y": -0.3236,
+    "l": 0.3345,
+    "faces": [
+     [
+      0.3032,
+      0.1001,
+      0.1411,
+      0.3762
+     ]
+    ]
+   }
+  },
+  "Sunset Street Dance Freeze.jpg": {
+   "size": 545649,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": 0.1474,
+    "y": 0.0042,
+    "l": 0.4542,
+    "faces": [
+     [
+      0.2841,
+      0.1306,
+      0.0634,
+      0.1689
+     ]
+    ]
+   }
+  },
+  "Sunset Tango Over the Historic City-1.jpg": {
+   "size": 639612,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.2615,
+    "y": 0.0003,
+    "l": 0.4537,
+    "faces": []
+   }
+  },
+  "Teal Bassist Under Concert Lights.jpg": {
+   "size": 493789,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.078,
+    "y": 0.0725,
+    "l": 0.2584,
+    "faces": [
+     [
+      0.4483,
+      0.0457,
+      0.1072,
+      0.286
+     ]
+    ]
+   }
+  },
+  "Teal Lights, Electric Concert Performance.jpg": {
+   "size": 407660,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.2331,
+    "y": -0.0497,
+    "l": 0.2703,
+    "faces": [
+     [
+      0.4302,
+      0.056,
+      0.0636,
+      0.0953
+     ]
+    ]
+   }
+  },
+  "Triumphant Singer Under Spotlight.jpg": {
+   "size": 389302,
+   "look": {
+    "aspect": 2.667,
+    "px": 2048,
+    "x": -0.128,
+    "y": -0.305,
+    "l": 0.3767,
+    "faces": [
+     [
+      0.5338,
+      0.0674,
+      0.1457,
+      0.3884
+     ]
+    ]
+   }
+  },
+  "Turbaned Guitarist Under Concert Lights-1.jpg": {
+   "size": 500483,
+   "look": {
+    "aspect": 1.5,
+    "px": 1536,
+    "x": -0.0671,
+    "y": -0.0695,
+    "l": 0.5657,
+    "faces": [
+     [
+      0.4048,
+      0.0618,
+      0.0548,
+      0.0822
+     ]
+    ]
+   }
+  },
+  "Velvet Midnight Jazz Performance.jpg": {
+   "size": 434386,
+   "look": {
+    "aspect": 3.0,
+    "px": 2172,
+    "x": 0.0903,
+    "y": -0.1132,
+    "l": 0.2222,
+    "faces": [
+     [
+      0.3896,
+      0.1064,
+      0.0711,
+      0.2134
+     ],
+     [
+      0.5645,
+      0.1615,
+      0.0384,
+      0.1152
+     ],
+     [
+      0.1162,
+      0.1783,
+      0.0474,
+      0.1422
+     ]
+    ]
+   }
+  }
+ }
+}

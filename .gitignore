@@ -1,0 +1,9 @@
+.DS_Store
+avatars-original/
+dances-original/
+__pycache__/
+amber-pipeline/
+
+# Local-only secrets (API keys); never pushed
+.secrets/
+walls-original/

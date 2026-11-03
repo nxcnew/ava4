@@ -1,0 +1,348 @@
+# Dance Arena - project knowledge
+
+Running context for this project: what was decided, why, and what's still open. [CLAUDE.md](../CLAUDE.md) covers how the code is laid out. This file covers history and reasoning, and [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md) covers making characters.
+
+**How to update:** add a new version at the top of the log for each meaningful step. Keep the sections below the log current; edit them in place, don't just append.
+
+## Version log
+
+### v11 - 2026-11-03 - Freeze fix, three matching walls, JPEG walls, history squashed
+
+**Picture froze after the first song (main stage, club, rooftop):**
+
+- **Cause:** at a song change the beat is briefly negative. The "dancers" look in `RIG_LOOKS` indexed `ds[(i + k) % n]`, which is negative in JS, so it got `undefined` and threw.
+- **Why it froze:** three.js stops the `setAnimationLoop` callback after an error, so the picture froze while the audio played on.
+- **Fix:** the look now uses `mod()`. The frame body is now `frame()` inside a try/catch that logs each distinct error once, so a bad frame can never freeze the page again.
+- **How it was found:** an instrumented copy in headless Chrome with 7 dancers. Always run it with `--mute-audio`.
+
+**Crowd follow-up (v10):**
+
+- **Raised arms are rare:** both arms up is about 4% of bobbers and 1% of the rest. One arm up is about 6% of bobbers.
+- **Hands:** open palms (four splayed fingers and a thumb) or fists.
+- **Phones:** about 3% hold up a phone. Each has a lit screen box (instanced) and a flash glow (`Points` with `glowTex`).
+
+**Studio walls:** all three share a hue. Left is random; right and back are the closest `lookDist` matches to it.
+
+**Walls are JPEG:**
+
+- Quality 92, 42 MB instead of 184 MB of PNG.
+- `scripts/shrink-walls.sh` converts them; the watcher runs it on new PNGs.
+- Originals go to `walls-original/` (gitignored).
+
+**History squashed:** GitHub counted the repo at 1.0 GB, 825 MB of which was old unshrunk avatar FBX versions in the history.
+
+- With the owner's OK, main was replaced by one commit of the current files and force-pushed.
+- The old history survives only in the local branch `backup-before-wipe`.
+
+### v10 - 2026-11-03 - Festival crowd: fewer people, human shapes, mostly still
+
+**Owner feedback:** too many bobbing heads, all of them moving, and they looked like minions with cylinder bodies.
+
+**Change (`festCrowd`):**
+
+- **Fewer people:** 420 instead of 1300, each at least 0.55 m from the next (rejection sampling), so nobody overlaps.
+- **Human shape:** each person is a merged silhouette of legs, a torso wider at the shoulders, shoulders, neck, head and arms. There are two instanced meshes, arms down and arms up. Arms up goes to about a third of the bobbers and 5% of the rest.
+- **Variety:** per-person height and width, and a yaw of up to +-0.45 rad.
+- **Motion:**
+  - 62% stand still, 24% bob on the beat and 14% sway.
+  - Leaning only happens among the movers.
+  - Everyone is still when there's no music; the old idle drift is gone.
+- **Import:** `mergeGeometries` now comes from `three/addons/utils/BufferGeometryUtils.js`.
+
+### v9 - 2026-11-03 - New wall images made to the walls' shapes
+
+**New images:** the owner added 48 ChatGPT images to `walls/`:
+
+- 8:3 at 2048 x 768, for the side walls;
+- 3:1 at 2172 x 724, for the back wall;
+- one 16:9 image.
+
+All are fictional people, about 2.3 MB PNG each, and are left as they came.
+
+**Choosing images (`randomWalls`):**
+
+- **Back wall:** a 3:1-or-wider image (`PANO = 2.85`). If there are none, it falls back to any image of 1.2:1 or wider, as before.
+- **Side walls:** everything narrower than the back-wall tier.
+- **Side-wall pool:** a new first tier, `shaped`, holds images within 6% of the wall's 8:3. They show whole, with no crop, so face framing doesn't matter for them. The v8 tiers follow behind it. The library now has 25 shaped side images and 25 images of 3:1 or wider. With that many shaped images, the old 1254 px squares no longer reach the side walls.
+
+**Prompt used:** see the conversation of 2026-11-02. Side images are 8:3 with one performer and the face upper-middle. Back images are wide, with no text, because the wall is mirrored.
+
+### v8 - 2026-11-02 - Side walls: always full width, single sharp faces
+
+**Owner rule:** a wallpaper always fills 100% of a side wall's width. No zoom-out, no mirrored edges. This replaces the zoom-out in v6 and v7.
+
+**Framing:** `faceWindow` frames the biggest face inside the full-width strip and reports `fits`. A face fits when it's whole and no other face is cut by the edges.
+
+**Choosing side-wall images (`randomWalls`):** the first pool with at least two images wins:
+
+1. one face that fits, at 1000 px or more;
+2. one face that fits;
+3. any image whose faces fit;
+4. any image.
+
+Today the first pool holds 4 of the 1254 px portraits. `manifest.json` looks now carry `px`, the long side in pixels.
+
+**Why it looked worse lately (checked against the first commit):**
+
+- **Rendering is unchanged:** same wall size, stretch, texture settings and renderer.
+- **What changed:**
+  - Wide images were taken off the side walls (owner request, v2). Those were stretched about half as much.
+  - Framing on faces (v6) put faces where the pixels show most.
+- **Source images:** about 510 px across, unchanged since the first commit.
+
+### v7 - 2026-11-02 - Every face framed whole; wallpaper resolution noted
+
+**Framing (`faceWindow`)**
+
+- **Which faces:** every face at least 15% of the main face's size, with 20% headroom and chin plus neck below.
+- **Zoom-out limit:** the slice may grow to fit them down to 80% of the wall width. Faces that still don't fit are dropped, farthest from the main face first.
+- **Partial faces:** a face left out is kept fully out of view, never cut across the edge.
+- **One big face:** if it alone doesn't fit, it's framed snugly.
+
+**Result on the current side images:** 0 of 22 have a face cut by the edge. The narrowest is 89% of the wall width.
+
+**Wallpaper resolution:** never compressed; unchanged since the first commit. Most are about 510 px across (the largest 1254 px). On a 17.6 m side wall the visible strip is about 200 px tall, so it looks pixelated or dithered. Higher-resolution source images (2048 px+) are the real fix.
+
+### v6 - 2026-11-02 - Wallpapers framed on the main face
+
+**The problem**
+
+- **Geometry:** the side walls are 2.67:1 and the side images are about square. At full width, only about 37% of an image's height shows, and pinning to the top cut faces off.
+
+**How faces are found**
+
+- **Ahead of time:** `make-manifest.sh` now runs `scripts/faces.swift` (macOS Vision) and stores the faces in `look.faces`.
+- **Fallback:** without a manifest (`file://`, dropped folders), the page uses the browser's `FaceDetector` where one exists. Otherwise it keeps the image pinned to the top.
+
+**How the slice is chosen (`faceWindow`)**
+
+- **Framing:** the visible slice is framed on the biggest face, with about 15% of the face height as headroom and the chin included. This drops empty space at the top.
+- **Tall faces:** if the face is taller than the slice, the image zooms out just enough to fit it. The sides then continue mirrored (`MirroredRepeatWrapping`).
+- **Current images:** 3 of the 22 side images zoom out, to 88-91% of the wall width. The rest fill the width.
+- **Wide back-wall images:** unchanged; they fill the height and crop the sides.
+
+### v5 - 2026-11-02 - Chill sway, wallpaper top, reversed drag, studio door, decor
+
+**Chill**
+
+- **During quiet passages while music plays:** dancers sway on the beat to "Happy Idle", as in the original build.
+- **No music:** dancers stand on "Idle 1" at its natural speed, which is almost still.
+- **Switching:** the two cross-fade with `liveMix`.
+
+**Wallpapers:** tall images are pinned to the top edge of the wall, so heads are never cut off. Before, they were 80% towards the top.
+
+**Mouse drag:** reversing it with `controls.rotateSpeed = -1` was tried and undone at the owner's request. The default direction stays.
+
+**Studio door**
+
+- **The opening:** a real doorway cut into the right wall and its wallpaper (`doorwayWall`).
+- **The door:** hinged at the back edge, it opens into the room.
+  - **Room side:** carries the cut-out piece of the right wallpaper, sharing that wall's material and UVs, so closed, the wallpaper runs unbroken.
+  - **Fittings:** brass knobs, an auto-closer body and a two-link arm to a header bracket.
+- **Behind it:** a dark corridor (an inside-faced box).
+- **Entering and leaving:** studio characters now start and end in the corridor (`DOOR.x = ROOM.side + 1.3`). The door opens fast when a walker is within 1.9 m, then closes slowly and eases shut (`updateDoor`).
+- **Kept:** the yellow frame.
+- **Changed:** the skirting LED strip now stops at the doorway.
+
+**Decor above the mirror:** a backlit walnut slat band between brass rails, wall-washer pucks, and a pink neon script "Move · Feel · Become" (middle dots, U+00B7) on a smoked-glass plate. It's static, matching the studio's no-pulse rule. The mirror height is unchanged.
+
+### v4 - 2026-11-02 - Jamendo key out of the public page
+
+- **Removed:** `index.html` no longer contains the Jamendo client id.
+- **Where the page gets it:** the browser's local storage (`jamKey`). The key is saved as soon as it's pasted into the panel, and again on search.
+- **Owner's copy:** kept in `.secrets/keys.env` (gitignored), so it can be handed back on request.
+- **Still public:** the key remains in git history from earlier commits.
+
+### v3 - 2026-11-02 - Amber pipeline absorbed
+
+- **Source:** the earlier assistant's `amber-pipeline/` handover (a long handover doc plus 4 Blender scripts) was folded in.
+- **Scripts:** now in `scripts/blender/`, with paths as arguments and per-character `CONFIG` blocks. They're listed in [scripts/README.md](../scripts/README.md).
+- **Pipeline doc:** the character know-how is now in [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md). That covers the steps, the CC→Mixamo bone map, the spring/face naming contract, how Amber's chains were built, FBXLoader gotchas and a commission spec.
+- **Not in the repo:** `amber-pipeline/` itself is gitignored. The watcher had already pushed it once (commit 3d03593) before it was ignored.
+- **Next:** do the same for other characters; the approach is still to be discussed.
+
+### v2 - 2026-11-01 to 2026-11-02 - GitHub, web loading, floor behaviour
+
+**Hosting and loading**
+
+- **Repo:** `nxcnew/ava4` (public), served by GitHub Pages from `main`. Every change goes straight to main (owner rule).
+- **Manifest:** Pages has no directory listings, so `manifest.json` (from `make-manifest.sh`) lists the files, their sizes and the wall "looks".
+- **Lazy web loading:**
+  - Only 2 random starters (never Amber) and 6 dances load up front.
+  - Other characters download when ticked, with a progress bar and a dimmed row until ready.
+  - Songs load lazily.
+- **FBX size:**
+  - `shrink-fbx.py` cut the avatars from 667MB to ~145MB by shrinking embedded textures.
+  - Not used: assimp FBX→GLB conversion, because it added pivot nodes and dropped a texture.
+
+**Wallpapers**
+
+- Picked at random. The side walls are paired by hue.
+- Wide images (aspect ≥ 1.2) go only on the back wall/mirror.
+- The back wall exists both in the mirror and when orbiting directly, as two mirrored copies on separate layers.
+- The background settings were removed from the panel.
+
+**Small casts**
+
+- With ≤4 avatars, everyone dances on the floor from the start.
+- Ticked avatars walk in from the door, and the others walk to new slots. Nothing slides.
+- Plain walk for entering and between songs; a dancy walk only sometimes mid-song.
+- Starts on the plain "Idle 1" at natural speed. Not clapping, and not beat-synced.
+
+**Scene**
+
+- **Studio ceiling:** 3×3 light panels.
+- **Orbit:** 360° horizontally; the vertical range is unchanged on purpose.
+- **Festival crowd:** half the bobbing heads, a lower bob (0.12), and random slight left/right leans.
+
+**Avatars and motion**
+
+- **Grounding:** padded body bones (hands, head, knees, hips…) can't go below the floor, which fixes inverted poses. Freeze went from a hand 14cm under the floor to 4cm above it.
+- **Hips rescale range:** widened to `1e-4 < r < 1e4` (user edit) so metre/cm rigs both work.
+- **Pasted by the owner:**
+  - `avatarMaterial` (MeshStandardMaterial + RoomEnvironment). It was already present.
+  - Spring bones + faces runtime, and morph targets through the FBX worker.
+
+### v1 - before 2026-11-01 - original build (earlier assistant, claude.ai)
+
+- **The app:** a single-file three.js app with:
+  - a beat-tracking worker;
+  - beat-locked dance playback;
+  - crowd moods;
+  - five venues;
+  - a player bar;
+  - an FBX parse worker;
+  - avatar materials.
+- **Amber:** a CGTrader CC4 model, rebuilt through Mixamo with the original weights, 22 spring bones and 18 face shapes.
+- **Source:** the details come from the handover, folded into this file and [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md).
+
+## Owner preferences (keep them)
+
+**Writing and process**
+
+- **Punctuation:** plain hyphens in writing, never em dashes.
+- **Real people:** never depict a real celebrity or real person, in wallpapers or avatars.
+- **Instructions:** give step-by-step instructions one step at a time.
+- **When unsure:** ask rather than guess.
+- **Pasted code:** when the owner pastes code with "don't change anything else", apply exactly that.
+- **Testing:** the owner tests on the live Pages site and from `file://`, so push every change to main.
+
+**Jamendo key**
+
+API keys never go in the page source or the repo. The Jamendo client id is pasted into the panel once per browser and kept in local storage. The owner's copy lives in `.secrets/keys.env` (gitignored); give it back when asked.
+
+**Behaviour rules**
+
+- **Stage size:** at most 5-6 dancers on stage. The count is random and rotates each song.
+- **Small casts:** ≤4 avatars all dance together (`SMALL_CAST`; the handover said 5).
+- **Spacing:** dancers never overlap, and the camera zoom follows the count.
+- **Entrances and exits:** avatars walk in and out. Leavers are unloaded from memory.
+- **Repositioning:** always a walk, never a slide or a jump.
+- **No music, no dancing:** nobody dances with the music stopped or paused.
+- **Crowd:** never does sit/stand loops. Calm moves only when the music is calm or stopped.
+- **Studio:** bright static lights, light floor and walls, studio floor markings, full-wall wallpapers.
+- **Festival:** performers only on stage, kept light on the processor.
+- **Right panel:** slides to the edge, returns on hover and fades when idle. Opening it must not reframe the arena.
+- **Player bar:** nearly invisible until hovered.
+
+## Core systems, the reasoning behind them
+
+### Beat tracking (worker)
+
+1. Spectral-flux onsets.
+2. Tempo by autocorrelation.
+3. An Ellis-style dynamic-programming beat tracker.
+4. Downbeats from kick-band strength plus harmonic novelty.
+5. Chill from beat-hit density.
+
+`nowBeat()` follows the beat grid, so tempo drift is tracked. Accuracy is about 3-11 ms on synthetic songs.
+
+### Dance sync
+
+- **Direct time setting:** action time is set directly, not advanced by `dt`: `clipTime = offset + (beat - segStart) * mult * period`. Every dancer is frame-locked to the music and to each other.
+- **Clip period:** comes from the hips bounce.
+- **Travel removal:** `stabilize` removes root travel. **Known cost:** the feet slide, because hip travel is removed but the feet aren't planted. The owner sees this as "hovering left/right". Not fixed yet.
+
+### Lights
+
+- **Club:** steps on bar/beat cues. Free-running phases drifted out of sync.
+- **Studio:** static. Pulses are gated on `liveMix`, so silence doesn't throb.
+
+### Avatar materials
+
+FBX Phong is rebuilt as MeshStandardMaterial:
+
+- **Roughness by name:** skin 0.58, leather 0.5, hair 0.65, others 0.8.
+- **Environment:** RoomEnvironment at 0.45.
+- **Hair-like materials:** alphaTest and alphaToCoverage, double-sided.
+- **Dark diffuse factor:** when a map exists, it's forced to white. Otherwise black T-shirts.
+
+### FBX worker
+
+- **Effect:** the main-thread freeze went from ~440 ms to ~24 ms per 39 MB character.
+- **Rule:** any new mesh feature must be added to both `serialize` and `rebuildScene`.
+
+## Problems solved (quick reference)
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Hair invisible | Packed textures had no file extension | `fix_texture_names.py` |
+| Skin plastic, leather chrome | FBX Phong specular | `avatarMaterial` |
+| T-shirt and jeans black | Dark diffuse factor × map | Force the colour to white when a map exists |
+| Amber flying or vanishing | Metre rig vs cm clips, rescale window 0.2-5 | Window widened to 1e-4 to 1e4 |
+| Hair and jacket glued to skin | Mixamo auto-weights | `cc_weights.py` |
+| Dancing before Play | Chill clip picked late | Lazy `pickChillClip`; rotate only when `musicOn()` |
+| Lights drifting | Speed × phase | Cue-based stepping |
+| Page stutters on load | Main-thread FBX parse | Worker |
+| Face shapes shattered | FBXLoader quad morph bug | Triangulate the face mesh |
+| ~250 MB of graphics memory per avatar | Morphs on the whole body | Separate face mesh |
+| Springs not found | Duplicate zero-length bones | Skip same-name children |
+| Assets 404 on Pages | No directory listings | `manifest.json` |
+| Second starter slid into place | Glide on reflow | Floor plan reserved before loading; walks only |
+| Hands under the floor in freezes | Only the feet were grounded | Padded body-bone floor constraint |
+| Idle bobbing | Breathing Idle beat-synced at ~1.3× | "Idle 1" at natural speed |
+
+## Testing
+
+### Current approach (Claude Code on this Mac)
+
+- **No headless browser:** headless Chrome can't run inside the sandbox.
+- **Node simulation instead:** the page's animation functions are extracted from index.html and run in Node against three@0.160.0 with real FBX files. This measures heights, slides and bone angles numerically.
+- **Syntax check:** `node --check` on the extracted module.
+
+### Earlier approach
+
+Playwright with swiftshader; see [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md) §7.
+
+## Tooling
+
+### Autopush watcher
+
+- **Where it lives:** a bash loop in the Claude session scratchpad, not in the repo.
+- **What it does:**
+  - waits for the tree to settle;
+  - shrinks any new FBX over 15MB;
+  - reruns `make-manifest.sh` if assets changed;
+  - commits and pushes to main.
+- **Pausing:** a pause file holds it back during multi-file edits.
+- **Restarting:** it has to be recreated in each new session.
+- **Caution:** it pushes *anything* untracked. Add folders that must stay local to `.gitignore` before they appear.
+
+### Other tools
+
+- **Pages build status:** `gh api repos/nxcnew/ava4/pages/builds/latest`.
+- **Blender:** not installed yet; the Blender scripts need it.
+
+## Open items
+
+1. **Foot sliding during dances:** a side effect of `stabilize`. The fix would be foot planting while the feet are down.
+2. **Pre-play "blip out and in":** reported by the owner, not reproduced. Suspected main-thread FBX parse hitches on `file://`.
+3. **Springs and faces at full frame rate:** never watched live. Tune `SPRING_TUNE` and the smile/brow strength.
+4. **Studio lighting for realistic faces:** a soft key light on the dancers, without darkening the room.
+5. **Character pipeline for other characters:** to be discussed.
+6. **Possible move to GLB:** would avoid the FBXLoader morph and duplicate-bone bugs.
+7. **Google Drive "Mixamo" / Amber_Blender folder:** set its sharing back to Restricted. It was shared as "anyone with link: Editor".
+8. **Realism limits:**
+   - no subsurface skin;
+   - jacket sleeves and body follow the torso;
+   - no eye or jaw motion on Mixamo rigs.
