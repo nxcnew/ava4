@@ -3031,10 +3031,11 @@ async function randomWalls(imgs) {
   const pool = [shaped, sharp, single, fitting, sides, looks.filter(k => !backs.includes(k)), looks].find(p => p.length >= 2) || looks;
   const both = pool === shaped ? [...shaped, ...crops] : pool;
   const left = pool === shaped && crops.length && Math.random() < 0.35 ? pick(crops) : pick(pool);
-  // All three walls share a colour: the right wall and the back wall are the closest matches to the left one.
-  const closest = (list, to) => list.length ? list.reduce((p, q) => lookDist(q, to) < lookDist(p, to) ? q : p) : to;
-  const right = closest(both.filter(k => k !== left), left);
-  const back = closest(backs.filter(k => k !== left && k !== right), left);
+  // All three walls share a colour: the right wall is one of the 3 closest matches to the left one, the back wall one of
+  // the 6 closest (always taking the single closest made a few middle-of-the-range images win almost every time)
+  const near = (list, to, n) => list.length ? pick(list.slice().sort((p, q) => lookDist(p, to) - lookDist(q, to)).slice(0, n)) : to;
+  const right = near(both.filter(k => k !== left), left, 3);
+  const back = near(backs.filter(k => k !== left && k !== right), left, 6);
   setWallpaper(left.f, 0); setWallpaper(right.f, 1); setWallpaper(back.f, 2);
 }
 
