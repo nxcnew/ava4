@@ -53,14 +53,18 @@ button{cursor:pointer}
 .icon-btn:hover{color:var(--fg);border-color:#4a3f70}
 .icon-btn[aria-pressed="true"]{color:var(--cool);border-color:rgba(32,224,255,.5)}
 .icon-btn svg{transition:transform .4s cubic-bezier(.22,1,.36,1)}
-.icon-btn[aria-pressed="true"] svg{transform:rotate(180deg)}
+.pin-btn[aria-pressed="false"] svg{transform:rotate(35deg);opacity:.7}
+@media (hover:none){ .pin-btn{display:none} }
 .panel-edge{position:fixed;top:0;right:0;bottom:0;width:16px;z-index:5;display:none}
-.autohide .panel-edge{display:block}
+.autohide .panel-edge,.panel-away .panel-edge{display:block}
+.panel-toggle svg{transition:transform .3s ease}
+.panel-toggle[aria-expanded="false"] svg{transform:rotate(180deg)}
 .panel-handle{position:absolute;right:0;top:50%;width:24px;height:132px;margin-top:-66px;border-radius:10px 0 0 10px;background:var(--panel);
   border:1px solid var(--line);border-right:0;display:grid;place-items:center;color:var(--muted);opacity:0;transform:translateX(100%);
   transition:opacity .4s ease .15s, transform .5s cubic-bezier(.22,1,.36,1) .15s;pointer-events:none}
 .panel-handle span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
-.panel-away .panel-handle{opacity:1;transform:none}
+.panel-handle{gap:8px;align-content:center;padding:0;font:inherit;cursor:pointer}
+.panel-away .panel-handle{opacity:1;transform:none;pointer-events:auto}
 .panel-edge:hover .panel-handle{color:var(--fg);border-color:var(--cool)}
 .panel-body{overflow-y:auto;padding:12px;display:grid;gap:10px;align-content:start;overscroll-behavior:contain}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -272,15 +276,18 @@ ul.list:empty{display:none}
     <label class="pvol" for="pVol" title="Volume"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 010 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="range" id="pVol" min="0" max="1" step="0.01" value="0.85" aria-label="Volume"></label>
   </div>
 
-  <div class="panel-edge" id="panelEdge" aria-hidden="true"><div class="panel-handle"><span>Controls</span></div></div>
+  <div class="panel-edge" id="panelEdge"><button class="panel-handle" id="panelExpand" type="button" aria-label="Expand the controls panel" title="Expand the panel"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Controls</span></button></div>
   <aside class="panel" id="panel">
     <div class="panel-bar">
       <span>Controls</span>
-      <button class="icon-btn" id="panelHide" type="button" aria-pressed="false" title="Auto-hide panel" aria-label="Auto-hide panel">
+      <button class="icon-btn pin-btn" id="panelPin" type="button" aria-pressed="true" title="Pinned: the panel stays open. Click to let it slide away when the mouse leaves." aria-label="Keep panel open">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 2h4l-.6 4.2L12 8.5v1H8.6V14L8 15l-.6-1V9.5H4v-1l2.6-2.3z" fill="currentColor"/></svg>
+      </button>
+      <button class="icon-btn" id="panelCollapse" type="button" title="Collapse the panel" aria-label="Collapse the panel">
         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
-    <button class="panel-toggle" id="panelToggle" type="button" aria-expanded="true">Controls <span aria-hidden="true">▾</span></button>
+    <button class="panel-toggle" id="panelToggle" type="button" aria-expanded="true">Controls <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="panel-body">
 
       <section class="acc open" id="accScene">
@@ -3920,12 +3927,16 @@ $('#auto').addEventListener('change', () => { planSwitch(); if (choreo.switchAt 
 $('#bars').addEventListener('change', planSwitch);
 /* Auto-hide panel: slides out to the right edge, comes back when the pointer touches the edge,
    and leaves again 1.5 s after the pointer moves away (re-entering cancels the timer). */
-const panelEl = $('#panel'), edgeEl = $('#panelEdge');
+const panelEl = $('#panel'), edgeEl = $('#panelEdge'), phoneUI = matchMedia('(max-width: 760px)');
 const desktopHover = matchMedia('(hover: hover) and (min-width: 761px)');
 let autoHide = false, closeTimer = null, openTimer = null;
+const touchUI = matchMedia('(hover: none)');
+let touchTimer = 0;
 function setPanelOpen(open) {
   panelEl.classList.toggle('away', !open);
   document.body.classList.toggle('panel-away', !open);
+  clearTimeout(touchTimer);
+  if (open && touchUI.matches) touchTimer = setTimeout(() => setPanelOpen(false), 3000); // touch: never stays open
 }
 function scheduleClose(ms = 1500) {
   clearTimeout(closeTimer); clearTimeout(openTimer);
@@ -3937,13 +3948,22 @@ function scheduleClose(ms = 1500) {
 function openSoon(ms) { clearTimeout(closeTimer); clearTimeout(openTimer); openTimer = setTimeout(() => setPanelOpen(true), ms); }
 function setAutoHide(on) {
   autoHide = on && desktopHover.matches;
-  $('#panelHide').setAttribute('aria-pressed', String(autoHide));
-  $('#panelHide').title = autoHide ? 'Keep panel open' : 'Auto-hide panel';
+  $('#panelPin').setAttribute('aria-pressed', String(!autoHide));
+  $('#panelPin').title = autoHide ? 'Unpinned: the panel slides away when the mouse leaves. Click to keep it open.' : 'Pinned: the panel stays open. Click to let it slide away when the mouse leaves.';
   document.body.classList.toggle('autohide', autoHide);
   try { localStorage.setItem('panelAutoHide', autoHide ? '1' : '0'); } catch (_) {}
   if (autoHide) scheduleClose(700); else { clearTimeout(closeTimer); setPanelOpen(true); }
 }
-$('#panelHide').addEventListener('click', () => setAutoHide(!autoHide));
+$('#panelPin').addEventListener('click', () => setAutoHide(!autoHide));
+// Collapse / expand: the same on every device. The arrow in the header slides the panel away; the Controls tab on
+// the right edge brings it back.
+$('#panelCollapse').addEventListener('click', () => { clearTimeout(openTimer); setPanelOpen(false); });
+$('#panelExpand').addEventListener('click', () => { clearTimeout(closeTimer); setPanelOpen(true); });
+// Touch screens: any touch, scroll or change inside the open panel restarts its 3 s; tapping the stage closes it
+for (const ev of ['pointerdown', 'input', 'change', 'scroll', 'keydown'])
+  panelEl.addEventListener(ev, () => { if (touchUI.matches && !panelEl.classList.contains('away')) setPanelOpen(true); }, { capture: true, passive: true });
+canvas.addEventListener('pointerdown', () => { if (touchUI.matches && !phoneUI.matches) setPanelOpen(false); });
+if (touchUI.matches) setPanelOpen(false);
 // Pointer resting over the panel for 2 s: fade it almost away so the arena shows through. Any movement brings it back.
 let idleTimer = null;
 function wakePanel() {
@@ -3968,7 +3988,6 @@ try { if (localStorage.getItem('panelAutoHide') === '1') setAutoHide(true); } ca
 
 // Phones: the panel is a bottom sheet that starts collapsed and never stays open: 3 s after the last touch, scroll or
 // change inside it, it folds away again (tapping the stage folds it at once).
-const phoneUI = matchMedia('(max-width: 760px)');
 let sheetTimer = 0;
 function setSheet(open) {
   const p = $('#panel'); p.classList.toggle('collapsed', !open);
