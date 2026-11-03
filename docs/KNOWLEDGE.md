@@ -6,6 +6,14 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v25 - 2026-11-03 - Brief for a new hero avatar
+
+**Decision:** Amber can't carry the detail the owner wants (expressions, fingers, long-hair physics). The plan is a new, original avatar with two outfits: crop top and joggers for the Studio, and a glitter stage costume for the main stage.
+
+**Brief:** [AVATAR_BRIEF.md](AVATAR_BRIEF.md) sets out the look from seven owner-picked wall images, the rig and physics-bone requirements, the page features still to build, and the budget.
+
+**Tool:** Character Creator 4 is the recommended route. It is not installed yet, and neither is Blender.
+
 ### v24 - 2026-11-03 - Wall cleanup and group shots
 
 **Cleanup:** the owner reviewed the 73 unused wall images and deleted 27 (the old low-res collages and some group shots). 130 remain.

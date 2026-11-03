@@ -12,6 +12,7 @@ Published from `main` via GitHub Pages: https://nxcnew.github.io/ava4 (repo `nxc
 
 - [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md): versioned log of what changed and why, owner preferences, problems solved, open items. Add a new version entry at the top for each meaningful step.
 - [docs/CHARACTER_PIPELINE.md](docs/CHARACTER_PIPELINE.md): turning a character (e.g. Character Creator) into a Mixamo-rigged avatar with spring bones and face shapes; the naming contract index.html relies on; FBXLoader gotchas.
+- [docs/AVATAR_BRIEF.md](docs/AVATAR_BRIEF.md): look, rig and physics brief for the new hero avatar (studio and stage outfits).
 - [scripts/README.md](scripts/README.md): manifest of every helper script. Put new one-off or reusable scripts in `scripts/` and add a row.
 
 ## Workflow rules
