@@ -1200,20 +1200,28 @@ const laserBeams = (() => {
   return { m, glow };
 })();
 const LASER_COLS = [...FEST_PAL_HEX, 0xe8f4ff, FEST_PAL_HEX[0]].map(c => new THREE.Color(c)); // the theme's colours plus cold white
+const LASER_MONO = [0x20ff40, 0xeef4ff, FEST_PAL_HEX[0], 0x20ff40, 0x20e0ff, FEST_PAL_HEX[1]].map(c => new THREE.Color(c)); // single-colour looks: classic green, white, cyan, the theme
 const laserQ = new THREE.Quaternion(), laserE = new THREE.Euler(0, 0, 0, 'YXZ'), laserS = new THREE.Vector3(1, 1, 1), laserM = new THREE.Matrix4(), laserC = new THREE.Color();
-// Every beam is aimed at a point in the crowd (people stand at z 7..14, heads around y 0), so the patterns are drawn
-// across the audience and the beams end there, never running on towards the camera behind them.
-// Each look gives that point for a beam: s is -0.5..0.5 across the head's fan, h.u 0..1 along its row, bt beats.
+// Laser looks, as laser designers build them: mostly parallel beam arrays, fans that open and close, tunnels and
+// flat "liquid sky" sheets, always mirrored left to right; criss-crossing only now and then. Every beam is aimed at a
+// point in or just over the crowd (people stand at z 7..14, heads around y 0), so beams end there and never run on
+// towards the camera. sg: -1 left half, 1 right half (mirror); s: -0.5..0.5 across the head's fan; h.u: 0..1 along
+// the row; bt: beats. Returns the target point in `out`.
+const LASER_LOOKS = ['parallel', 'fans', 'vsweep', 'tunnel', 'sky', 'wave', 'cross'];
+const laserDir = new THREE.Vector3();
 function laserTarget(h, s, look, bt, out) {
-  const alt = Math.floor(bt) % 2 ? 1 : -1, ph = bt * Math.PI / 2, x0 = h.row === 'side' ? h.side * 6 : h.p.x * 0.4;
-  switch (look) {
-    case 0: return out.set(x0 + s * 16, 1.2, 10);                                                 // fans across the crowd
-    case 1: return out.set(s * 10 + 8 * Math.sin(ph + h.u * 3), 1.2 + 0.6 * Math.sin(ph * 2), 10); // sweeping fans
-    case 2: return out.set(-(h.u - 0.5) * 20 * alt + s * 4, 1.5, 11);                           // criss-cross, flips every beat
-    case 3: return out.set(x0 + s * 12, 1.2 + 1.4 * (0.5 + 0.5 * Math.sin(ph + h.u * 5 + s * 3)), 10); // waves rolling along the rows
-    case 4: { const a = (s + 0.5) * Math.PI * 2 + bt * 0.4;                                     // tunnels converging on one ring
-      return out.set(Math.cos(a) * 3, 2.2 + Math.sin(a) * 1.6, 11); }
-    default: return out.set(x0 * 1.5 + s * 14, 3.2, 13);                                          // sheets just over the crowd's heads
+  const sg = h.row === 'side' ? h.side : (h.p.x < -0.01 ? -1 : h.p.x > 0.01 ? 1 : 0), ph = bt * Math.PI / 2;
+  const ax = Math.abs(h.p.x) / 13, aim = (yaw, el, dist = 13) => out.copy(h.p).addScaledVector(laserDir.set(Math.sin(yaw) * Math.cos(el), Math.sin(el), Math.cos(yaw) * Math.cos(el)), dist);
+  const el0 = h.row === 'floor' ? 0.16 : h.row === 'top' ? -0.42 : -0.12;                // just over the crowd's heads
+  switch (LASER_LOOKS[look]) {
+    case 'parallel': return aim(sg * (0.12 + 0.18 * Math.sin(ph * 0.5)), el0 + 0.08 * Math.sin(ph * 0.5));          // one beam a head, all parallel
+    case 'fans': return aim(sg * 0.15 + s * (0.25 + 0.75 * (0.5 + 0.5 * Math.sin(ph))), el0);                        // fans breathe open and shut
+    case 'vsweep': return aim(sg * (0.1 + 0.45 * (0.5 + 0.5 * Math.sin(ph * 0.5))) + s * 0.35, el0 + 0.05);          // mirrored V opening and closing
+    case 'tunnel': { const a = (s + 0.5) * Math.PI * 2 + bt * 0.5;                                                   // cones converging on one ring
+      return out.set(Math.cos(a) * 3.2, 2.4 + Math.sin(a) * 1.7, 11); }
+    case 'sky': return aim(sg * 0.2 + s * 1.3, (h.row === 'top' ? -0.3 : 0.24) + 0.03 * Math.sin(ph + s * 4), 14);   // flat sheet over the crowd
+    case 'wave': return aim(sg * (0.1 + ax * 0.3), el0 + 0.16 * Math.sin(ph - ax * 4));                              // tilt wave rolling out from the centre
+    default: { const alt = Math.floor(bt) % 2 ? 1 : -1; return out.set(-(h.u - 0.5) * 20 * alt + s * 4, 1.5, 11); }  // criss-cross, flips every beat
   }
 }
 const laserT = new THREE.Vector3();
@@ -1221,20 +1229,27 @@ const laserT = new THREE.Vector3();
 // bar (floor, truss, towers in turn) with full fans, so the beams draw one clear pattern, not a web. mode 2 (the
 // downbeat of a hit bar): every row at once, for that beat only.
 function updateLasers(bt, bar, pulse, level, mode, seed) {
-  const L = laserBeams, look = mod(bar + seed, 6), cA = LASER_COLS[mod(bar + seed, LASER_COLS.length)], cB = LASER_COLS[mod(bar + seed + 2, LASER_COLS.length)];
-  const glowC = L.glow.geometry.attributes.color.array;
+  // A look holds for 2 bars (moving all the while); the criss-cross comes up only about one time in ten
+  const blk2 = Math.floor(bar / 2) + seed, rnd = k => mod(Math.sin(k * 12.9898 + seed * 78.233) * 43758.5453, 1);
+  const look = rnd(blk2) < 0.1 ? 6 : mod(blk2, 6), single = look === 0 || look === 5;
+  // Colour per 4 bars: mostly one colour for every beam, sometimes a gradient mirrored from the centre out, rarely mixed
+  const blk4 = Math.floor(bar / 4) + seed, cr = rnd(blk4 + 101);
+  const cA = LASER_MONO[mod(blk4, LASER_MONO.length)], cB = LASER_COLS[mod(blk4 + 1, LASER_COLS.length)], scheme = cr < 0.65 ? 0 : cr < 0.93 ? 1 : 2;
+  const L = laserBeams, glowC = L.glow.geometry.attributes.color.array;
   const lead = ['floor', 'top', 'side'][mod(bar + seed, 3)], full = mode > 0;
   laserHeads.forEach(h => {
     const on = mode === 2 || (mode === 1 ? h.row === lead : h.row === 'top' && h.k % 2 === mod(Math.floor(bt), 2));
     const lv = on ? level * (0.55 + 0.45 * pulse) : 0;
     for (let b = 0; b < LASER_F; b++) {
-      const idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full || b === 3);
+      const idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full && !single || b === 3);
       if (beamOn) {
         const d = laserTarget(h, b / (LASER_F - 1) - 0.5, look, bt, laserT).sub(h.p), len = d.length();
         laserE.set(-Math.atan2(d.y, Math.hypot(d.x, d.z)), Math.atan2(d.x, d.z), 0);
         L.m.setMatrixAt(idx, laserM.compose(h.p, laserQ.setFromEuler(laserE), laserS.set(1, 1, len * 1.12)));
       } else L.m.setMatrixAt(idx, laserM.makeScale(0, 0, 0));
-      L.m.setColorAt(idx, laserC.copy((h.i + b) % 2 ? cA : cB).multiplyScalar(beamOn ? lv * 0.9 : 0));
+      const t = h.row === 'side' ? 1 : Math.abs(h.p.x) / 12;                                    // 0 at the centre, 1 at the edges
+      if (scheme === 0) laserC.copy(cA); else if (scheme === 1) laserC.copy(cA).lerp(cB, t); else laserC.copy((h.i + b) % 2 ? cA : cB);
+      L.m.setColorAt(idx, laserC.multiplyScalar(beamOn ? lv * (single ? 1.2 : 0.9) : 0));
     }
     laserC.copy(cA).multiplyScalar(lv * 0.5).toArray(glowC, h.i * 3);
   });
