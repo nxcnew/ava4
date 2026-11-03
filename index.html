@@ -1163,9 +1163,9 @@ for (const side of [-1, 1]) for (let i = 0; i < LASER_SIDE; i++) laserHeads.push
 laserHeads.forEach((h, i) => { h.i = i; });
 const laserBeams = (() => {
   const n = laserHeads.length * LASER_F;
-  // A beam starts as a point at the head and stays hair-thin; it is brightest at the head and fades out over the crowd
+  // A beam starts as a point at the head and stays thin; it is brightest at the head and fades out over the crowd
   // (vertex colours along its length)
-  const geo = new THREE.CylinderGeometry(0.012, 0.0005, 1, 4, 1, true).translate(0, 0.5, 0).rotateX(Math.PI / 2), zs = geo.attributes.position.array;
+  const geo = new THREE.CylinderGeometry(0.02, 0.002, 1, 4, 1, true).translate(0, 0.5, 0).rotateX(Math.PI / 2), zs = geo.attributes.position.array;
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(zs.length).map((_, i) => 1 - 0.92 * zs[i - (i % 3) + 2]), 3));
   const m = new THREE.InstancedMesh(geo, new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false }), n);
   m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
