@@ -957,24 +957,19 @@ function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.
     // Towers with light bands
     const t = new THREE.Mesh(new THREE.BoxGeometry(3.4, 18, 3.4), dark); t.position.set(side * 14.5, FEST_GROUND + 9, -9); festG.add(t);
     for (let k = 0; k < 7; k++) festStrip(new THREE.BoxGeometry(3.45, 0.12, 3.45), [side * 14.5, FEST_GROUND + 1.5 + k * 2.4, -9], null, k);
-    // Hanging line-array speakers, curving down like the real thing
-    for (let k = 0; k < 9; k++) {
-      const cab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.55, 1.0), dark);
-      cab.position.set(side * 12, 13.5 - k * 0.56 - k * k * 0.008, 3.2 + k * k * 0.02); cab.rotation.x = -k * 0.04; festG.add(cab);
-      const grille = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.42), new THREE.MeshStandardMaterial({ color: 0x15141c, roughness: 0.9 }));
-      grille.position.set(0, 0, 0.51); cab.add(grille);
-    }
-    // Subwoofer stacks at the front of the stage, with speaker cones
-    for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) {
-      const sub = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.1, 1.1), dark);
-      const x = side * (9 + col * 1.35), y = FEST_GROUND + 0.55 + row * 1.12;
-      sub.position.set(x, y, 6.2); festG.add(sub);
-      const cone = new THREE.Mesh(new THREE.CircleGeometry(0.42, 20), new THREE.MeshStandardMaterial({ color: 0x1c1b24, roughness: 0.6, metalness: 0.2 }));
-      cone.position.set(x, y, 6.76); festG.add(cone);
-    }
   }
   // Truss over the stage
   for (const z of [3.2, -2, -7]) { const tr = new THREE.Mesh(new THREE.BoxGeometry(26, 0.3, 0.3), dark); tr.position.set(0, 10.5, z); festG.add(tr); }
+  // Two compact speaker hangs sitting on the middle truss, above the dancers, angled down at the crowd (clear of every
+  // laser path, which runs from the front truss, the stage floor and the towers)
+  const spk = new THREE.InstancedMesh(new THREE.BoxGeometry(1.3, 0.42, 0.8), dark, 10), grilleM = new THREE.MeshStandardMaterial({ color: 0x15141c, roughness: 0.9 });
+  const grilles = new THREE.InstancedMesh(new THREE.PlaneGeometry(1.2, 0.32), grilleM, 10), M = new THREE.Matrix4(), G = new THREE.Matrix4().makeTranslation(0, 0, 0.405);
+  for (const side of [-1, 1]) for (let k = 0; k < 5; k++) {
+    const i = (side + 1) / 2 * 5 + k;
+    M.makeRotationX(-0.05 - k * 0.03).setPosition(side * 5.5, 10.9 + k * 0.43, -2 + k * 0.03);
+    spk.setMatrixAt(i, M); grilles.setMatrixAt(i, M.clone().multiply(G));
+  }
+  festG.add(spk, grilles);
 })();
 // Main LED wall + two side screens, all sharing one generative shader. Four looks cycle with the dance moves:
 // kaleidoscopic fractal, tunnel, floor-style tile ripples, plasma. A handful of loop steps per pixel; light on the GPU.
@@ -1162,7 +1157,7 @@ const festCrowd = (() => {
   const people = [], c = new THREE.Color();
   // base: the floor they stand on; yaw 0 faces the stage
   const makePerson = (x, z, mode, shape, yaw, base) => {
-    const p = { x, z, mode, shape, base, yaw, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.25,
+    const p = { x, z, mode, shape, base, yaw, h: 0.9 + Math.random() * 0.2, w: 0.88 + Math.random() * 0.26, ph: Math.random() * 0.1, bob: 0.06 + Math.random() * 0.07, // ph: up to ~50 ms behind the beat
       lean: mode && Math.random() < 0.5 ? (Math.random() < 0.5 ? -1 : 1) * (0.03 + Math.random() * 0.06) : 0, leanSpeed: 0.25 + Math.random() * 0.5,
       skin: new THREE.Color(any(SKIN)), top: new THREE.Color(any(CLOTH)), bottom: new THREE.Color(Math.random() < 0.15 ? any(CLOTH) : any(PANTS)),
       hair: Math.random() < 0.06 ? null : any(HAIR_W), hairC: new THREE.Color(any(HAIRC)),
@@ -1576,7 +1571,7 @@ function festUpdate(beat, pulse, dt, t) {
   // and back, each their own way and pace. Calmer in quiet passages, all still with no music.
   for (const p of festCrowd.people) {
     const f = mod(beat + p.ph, 1);
-    const y = p.base + (p.mode === 1 ? Math.pow(Math.max(0, Math.sin(Math.PI * f)), 1.6) * 0.1 * energy : 0);
+    const y = p.base + (p.mode === 1 ? Math.pow(Math.max(0, Math.sin(Math.PI * f)), 1.6) * p.bob * energy : 0);
     const sway = p.mode === 2 ? Math.sin((beat + p.ph * 4) * Math.PI) * 0.1 * energy : 0;
     const a = p.lean * (0.5 + 0.5 * Math.sin((beat * p.leanSpeed + p.ph * 8) * Math.PI)) * energy; // lean from the feet
     crowdQ.setFromEuler(crowdE.set(0, p.yaw, a));
