@@ -1184,9 +1184,7 @@ const festCrowd = (() => {
     const shape = Math.random() < 0.03 ? 'phone' : q < 0.015 ? 'open' : q < 0.03 ? 'fists' : q < 0.12 ? (Math.random() < 0.5 ? 'fist' : 'open') + (Math.random() < 0.5 ? 'L' : 'R') : 'down';
     people.push(makePerson(x, z, mode, shape, (Math.random() * 2 - 1) * 0.45, FEST_GROUND));
   }
-  // On stage, facing the crowd: the DJ behind the decks on the riser, and a crew member at each monitor desk at the
-  // front corners. Clear of the dancers and their walks in from the wings.
-  people.push(makePerson(0, FEST_DJ.z - 0.65, 1, 'down', Math.PI, FEST_DJ.top));
+  // On stage: a crew member at each monitor desk at the front corners, clear of the dancers and their walks in.
   for (const side of [-1, 1]) people.push(makePerson(side * 12.3, 2.0, 0, 'down', Math.PI + side * 1.1, FEST_DECK_TOP));
   // The crowd is in the dark, lit by the stage: colours are kept deep so they read as people, not as glowing toys.
   const DIM = 0.22;
