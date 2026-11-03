@@ -1066,7 +1066,7 @@ const festScreenMat = new THREE.ShaderMaterial({
         float key = smoothstep(0.03, 0.12, dot(c, vec3(0.299, 0.587, 0.114)));
         vec3 cam;
         if (uCamFx < 0.5) cam = c * (0.93 + 0.07 * sin(vUv.y * 700.0)) * (1.0 - 0.45 * length((vUv - 0.5) * vec2(1.0, 1.6))) + outc * 0.25 * (1.0 - key);
-        else if (uCamFx < 1.5) cam = mix(outc * 0.55, c * 1.15, key);
+        else if (uCamFx < 1.5) cam = mix(outc * 0.55, c * 1.1 + outc * 0.15, key); // giants: a little of the art's colour spills onto them
         else cam = mix(outc * 0.3, c * 1.1, key);                       // triptych
         outc = mix(outc, cam, uCamMix);
       }
