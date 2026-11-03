@@ -918,10 +918,25 @@ const sparkles = (() => {
        strobes, flame jets and fireworks. Everything decorative is cheap: basic additive materials and one instanced crowd. --- */
 const FEST_DECK_TOP = -0.04, FEST_GROUND = -1.6, FRONT_Z = 4.45; // FRONT_Z: the row of monitors and pyro along the stage's front edge
 const festStrips = []; // LED edges that change colour with the music
-function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: PALETTE_HEX[ix % 4] })); m.position.set(...pos); if (rot) m.rotation.set(...rot); m.userData.ix = ix; festG.add(m); festStrips.push(m); return m; }
+// Each page load dresses the main stage differently, like the studio's wallpapers: one random theme sets the
+// structure's finish, the deck, the light colours and the show palette (screens, LED edges, beams, lasers, fireworks).
+// Geometry and the show itself stay the same.
+const FEST_THEMES = [
+  { name: 'neon',    pal: [0xff2d95, 0x20e0ff, 0xffb020, 0x8a5cff], struct: [0x0b0a10, 0.7, 0.3],  deck: [0x0d0d14, 0.45, 0.5], hemi: [0x4050a0, 0x050408, 0.55], key: 0xc0c8ff, fog: 0x04040c },
+  { name: 'ice',     pal: [0x20e0ff, 0xe8f4ff, 0x3060ff, 0x8a5cff], struct: [0xaab4c4, 0.35, 0.6], deck: [0x1a2230, 0.2, 0.8],  hemi: [0x6090ff, 0x101828, 0.7],  key: 0xdde8ff, fog: 0x050a18 },
+  { name: 'inferno', pal: [0xff3010, 0xff8a00, 0xffd040, 0xff2d95], struct: [0x2a120a, 0.6, 0.5],  deck: [0x140806, 0.35, 0.6], hemi: [0xa04020, 0x100604, 0.6],  key: 0xffb080, fog: 0x0c0402 },
+  { name: 'jungle',  pal: [0x30ff70, 0xc0ff30, 0x20e0c0, 0xffe040], struct: [0x123020, 0.6, 0.4],  deck: [0x0a140c, 0.4, 0.5],  hemi: [0x40a060, 0x040a06, 0.6],  key: 0xc8ffd8, fog: 0x020a05 },
+  { name: 'sunset',  pal: [0xff2d95, 0xff7a20, 0x9a40ff, 0xffc040], struct: [0x3a1828, 0.5, 0.4],  deck: [0x1a0c14, 0.35, 0.6], hemi: [0xc05080, 0x100608, 0.65], key: 0xffc0a0, fog: 0x0e0410 },
+  { name: 'royal',   pal: [0x2050ff, 0xffc040, 0xf0f0ff, 0x8a5cff], struct: [0x182050, 0.4, 0.7],  deck: [0x0c0e20, 0.25, 0.8], hemi: [0x5060c0, 0x060610, 0.6],  key: 0xd0d8ff, fog: 0x04051a },
+  { name: 'chrome',  pal: [0xffffff, 0x20e0ff, 0xff2d95, 0xffb020], struct: [0x80868f, 0.3, 0.9],  deck: [0x202228, 0.15, 0.9], hemi: [0x8090b0, 0x101014, 0.65], key: 0xffffff, fog: 0x06070c },
+];
+const FEST_THEME = FEST_THEMES[Math.floor(Math.random() * FEST_THEMES.length)];
+const FEST_PAL_HEX = FEST_THEME.pal, FEST_PAL = FEST_PAL_HEX.map(c => new THREE.Color(c));
+const festDark = new THREE.MeshStandardMaterial({ color: FEST_THEME.struct[0], roughness: FEST_THEME.struct[1], metalness: FEST_THEME.struct[2] });
+function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: FEST_PAL_HEX[ix % 4] })); m.position.set(...pos); if (rot) m.rotation.set(...rot); m.userData.ix = ix; festG.add(m); festStrips.push(m); return m; }
 (() => {
-  const dark = new THREE.MeshStandardMaterial({ color: 0x0b0a10, roughness: 0.7, metalness: 0.3 });
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(32, FEST_DECK_TOP - FEST_GROUND, 18), new THREE.MeshStandardMaterial({ color: 0x0d0d14, roughness: 0.45, metalness: 0.5 }));
+  const dark = festDark, [dc, dr, dm] = FEST_THEME.deck;
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(32, FEST_DECK_TOP - FEST_GROUND, 18), new THREE.MeshStandardMaterial({ color: dc, roughness: dr, metalness: dm }));
   deck.position.set(0, (FEST_DECK_TOP + FEST_GROUND) / 2, -4); deck.receiveShadow = true; festG.add(deck);
   festStrip(new THREE.BoxGeometry(32, 0.06, 0.06), [0, FEST_DECK_TOP, 5], null, 1);
   const crowdGround = new THREE.Mesh(new THREE.PlaneGeometry(160, 90), new THREE.MeshStandardMaterial({ color: 0x07060b, roughness: 1 }));
@@ -1106,7 +1121,7 @@ const laserBeams = (() => {
   glow.frustumCulled = false; festG.add(glow);
   return { m, glow };
 })();
-const LASER_COLS = [0x20e0ff, 0x30ff70, 0xff2d95, 0x8a5cff, 0xe8f4ff, 0xffb020].map(c => new THREE.Color(c));
+const LASER_COLS = [...FEST_PAL_HEX, 0xe8f4ff, FEST_PAL_HEX[0]].map(c => new THREE.Color(c)); // the theme's colours plus cold white
 const LASER_LEN = 30, laserQ = new THREE.Quaternion(), laserE = new THREE.Euler(0, 0, 0, 'YXZ'), laserS = new THREE.Vector3(1, 1, LASER_LEN), laserM = new THREE.Matrix4(), laserC = new THREE.Color();
 // Each look gives a beam's aim as [yaw, elevation] (radians; yaw 0 is straight at the crowd, +x to the right).
 // s: -0.5..0.5 across the head's fan; h.u: 0..1 along its row; bt: beats.
@@ -1148,7 +1163,7 @@ function updateLasers(bt, bar, pulse, level, full, seed) {
 const beams = [];
 for (let i = 0; i < 16; i++) {
   const len = 15, geo = new THREE.ConeGeometry(Math.tan(0.08) * len, len, 20, 1, true); geo.translate(0, -len / 2, 0); geo.rotateX(-Math.PI / 2);
-  const m = new THREE.Mesh(geo, additive(PALETTE_HEX[i % 4], 0.06, { side: THREE.DoubleSide }));
+  const m = new THREE.Mesh(geo, additive(FEST_PAL_HEX[i % 4], 0.06, { side: THREE.DoubleSide }));
   const onWing = i >= 10, x = onWing ? (i < 13 ? -1 : 1) * (17 + (i % 3) * 1.6) : (i - 4.5) * 2.6;
   m.position.set(x, onWing ? 9 + (i % 3) * 2.5 : 10.3, onWing ? -10 : -2);
   festG.add(m);
@@ -1244,7 +1259,7 @@ function launchFirework(kind, x, riseSecs) {
   const cx = x !== undefined ? x : (Math.random() * 2 - 1) * 26;
   fw.from.set(cx * 0.8, FEST_GROUND + 2, -16 - Math.random() * 6);
   fw.to.set(cx, 20 + Math.random() * 10, fw.from.z - 4 - Math.random() * 6);
-  fw.col.set(fw.kind === 'willow' ? 0xffb050 : fw.kind === 'glitter' ? 0xffffff : PALETTE_HEX[Math.floor(Math.random() * 4)]).lerp(new THREE.Color(0xffffff), 0.2);
+  fw.col.set(fw.kind === 'willow' ? 0xffb050 : fw.kind === 'glitter' ? 0xffffff : FEST_PAL_HEX[Math.floor(Math.random() * 4)]).lerp(new THREE.Color(0xffffff), 0.2);
   fw.rise = fw.riseT = riseSecs || 1.1; fw.life = 0; fw.age = 0;
   fw.p.material.size = 0.5; fw.p.material.opacity = 1; fw.p.visible = true;
 }
@@ -1308,9 +1323,9 @@ function punchAt(beat) {
 function festUpdate(beat, pulse, dt, t) {
   const u = festScreenMat.uniforms; u.uBeat.value = beat; u.uPulse.value = pulse; u.uLive.value = liveMix; u.uChill.value = chillMix; u.uMode.value = mod(choreo.seg, 4);
   const bar = Math.floor(beat / 4), groove = musicOn() && chillMix < 0.5, energy = liveMix * (1 - 0.75 * chillMix);
-  u.uA.value.copy(PALETTE[mod(bar, 4)]); u.uB.value.copy(PALETTE[mod(bar + 1, 4)]);
+  u.uA.value.copy(FEST_PAL[mod(bar, 4)]); u.uB.value.copy(FEST_PAL[mod(bar + 1, 4)]);
   festWash.color.copy(u.uA.value); festWash.intensity = (6 + 26 * pulse) * (1 - 0.6 * chillMix);
-  festStrips.forEach(s => s.material.color.copy(PALETTE[mod(s.userData.ix + Math.floor(beat), 4)]).multiplyScalar(0.15 + 0.85 * (0.3 + 0.7 * pulse) * (0.3 + 0.7 * liveMix)));
+  festStrips.forEach(s => s.material.color.copy(FEST_PAL[mod(s.userData.ix + Math.floor(beat), 4)]).multiplyScalar(0.15 + 0.85 * (0.3 + 0.7 * pulse) * (0.3 + 0.7 * liveMix)));
   // Crowd: most stand still; the rest bob gently on the beat or sway, and some of those lean a little to one side
   // and back, each their own way and pace. Calmer in quiet passages, all still with no music.
   for (const p of festCrowd.people) {
@@ -1344,7 +1359,7 @@ function festUpdate(beat, pulse, dt, t) {
   beams.forEach(B => {
     if (B.k !== k) { B.k = k; B.from.copy(B.cur); const [x, z] = RIG_LOOKS[mod(choreo.seg + B.i, RIG_LOOKS.length)](B.i % 4, k + 1); B.to.set(x * 2.4, B.i % 2 ? FEST_DECK_TOP : FEST_GROUND, (B.i % 2 ? z : 6 + (B.i % 3) * 1.5)); } // onto the stage and the front rows
     B.cur.lerpVectors(B.from, B.to, e); B.m.lookAt(B.cur);
-    B.m.material.color.copy(PALETTE[mod(B.i + bar, 4)]);
+    B.m.material.color.copy(FEST_PAL[mod(B.i + bar, 4)]);
     B.m.material.opacity = (0.012 + 0.035 * ((B.i + k) % 2 ? pulse : pulse * 0.4)) * (0.3 + 0.7 * energy);
   });
   // Strobes flash on the beat in the busiest passages; bigger hit on the downbeat
@@ -1553,6 +1568,8 @@ const ENVS = {
               bg: 0x050714, fog: [0x0b1030, 150, 1500], hemi: [0x6080ff, 0x0a0a18, 0.55], key: [0x9fb0ff, 1.1, [-3, 8, 4]], spots: 1.2, crowd: 0.8, exposure: 1.05,
               cam: { min: 10, max: 15, phi: 1.32, ty: 1.2, sway: 0.42 } },
 };
+// The main stage's lighting follows this load's theme
+Object.assign(ENVS.festival, { bg: FEST_THEME.fog, fog: [FEST_THEME.fog, 30, 140], hemi: FEST_THEME.hemi, key: [FEST_THEME.key, 1.2, [3, 9, 6]] });
 let envName = 'studio', envCam = ENVS.studio.cam;
 const hemiLight = scene.children.find(o => o.isHemisphereLight);
 function applyEnv(name) {
