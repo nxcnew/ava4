@@ -978,10 +978,13 @@ function festStrip(geo, pos, rot, ix) { const m = new THREE.Mesh(geo, new THREE.
 const festScreenMat = new THREE.ShaderMaterial({
   toneMapped: false, fog: false,
   uniforms: { uBeat: { value: 0 }, uPulse: { value: 0 }, uLive: { value: 0 }, uChill: { value: 0 }, uMode: { value: 0 }, uA: { value: new THREE.Color(0xff2d95) }, uB: { value: new THREE.Color(0x20e0ff) }, uAspect: { value: 2.6 },
-    uArt: { value: null }, uArtMix: { value: 0 }, uArtXf: { value: new THREE.Vector4(1, 1, 0, 0) }, uCam: { value: null }, uCamMix: { value: 0 } },
+    uArt: { value: null }, uArtMix: { value: 0 }, uArtXf: { value: new THREE.Vector4(1, 1, 0, 0) }, uCam: { value: null }, uCamMix: { value: 0 }, uArtFx: { value: 0 }, uCamFx: { value: 0 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-  fragmentShader: `varying vec2 vUv; uniform float uBeat, uPulse, uLive, uChill, uMode, uAspect, uArtMix, uCamMix; uniform vec3 uA, uB;
+  fragmentShader: `varying vec2 vUv; uniform float uBeat, uPulse, uLive, uChill, uMode, uAspect, uArtMix, uCamMix, uArtFx, uCamFx; uniform vec3 uA, uB;
     uniform sampler2D uArt, uCam; uniform vec4 uArtXf;
+    vec3 hueRot(vec3 c, float a) { float an = a * 6.2832, ca = cos(an); vec3 k = vec3(0.57735); return c * ca + cross(k, c) * sin(an) + k * dot(k, c) * (1.0 - ca); }
+    vec3 rgb2hsv(vec3 c) { vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0); vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+      vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r)); float d = q.x - min(q.w, q.y); return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-6)), d / (q.x + 1e-6), q.x); }
     vec3 pal(float t){ return mix(uA, uB, 0.5 + 0.5 * sin(6.2831 * t)); }
     void main(){
       vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0) * 2.0;
@@ -1009,15 +1012,42 @@ const festScreenMat = new THREE.ShaderMaterial({
       float lv = mix(0.18, 0.35 + 0.65 * uPulse, uLive) * (1.0 - 0.55 * uChill);
       vec3 outc = col * lv * 1.7;
       // Art: a still image, slowly zooming and drifting (uArtXf: visible size and offset), pulsing with the beat
+      // ...brought to life by one of a few filters, all on the beat: 1 hue drift, 2 one colour kept and the rest grey,
+      // 3 gradient map in the stage colours, 4 a highlight sweeping across each bar with bright spots flashing on the
+      // kick, 5 chrome / solarise breathing in, 6 greyscale with colour flashing in on the kick, 7 a gentle ripple with
+      // colour fringes on the kick. 0: plain.
+      vec3 art = vec3(0.0);
       if (uArtMix > 0.001) {
-        vec3 art = texture2D(uArt, (vUv - 0.5) * uArtXf.xy + 0.5 + uArtXf.zw).rgb;
-        outc = mix(outc, art * (0.7 + 0.45 * uPulse * uLive) * (1.0 - 0.3 * uChill) + col * lv * 0.35, uArtMix);
+        vec2 auv = (vUv - 0.5) * uArtXf.xy + 0.5 + uArtXf.zw;
+        if (uArtFx > 6.5) auv += vec2(sin(vUv.y * 18.0 + uBeat * 3.1416), cos(vUv.x * 12.0 + uBeat * 1.5708)) * 0.004;
+        art = texture2D(uArt, auv).rgb;
+        if (uArtFx > 6.5) { float ca = 0.006 * uPulse; art.r = texture2D(uArt, auv + vec2(ca, 0.0)).r; art.b = texture2D(uArt, auv - vec2(ca, 0.0)).b; }
+        float lum = dot(art, vec3(0.299, 0.587, 0.114));
+        if (uArtFx > 0.5 && uArtFx < 1.5) art = max(hueRot(art, uBeat * 0.02), 0.0);
+        else if (uArtFx > 1.5 && uArtFx < 2.5) { vec3 h = rgb2hsv(art); float d = abs(fract(h.x - uBeat * 0.015 + 0.5) - 0.5);
+          art = mix(vec3(lum), art * 1.2, smoothstep(0.14, 0.05, d) * step(0.2, h.y)); }
+        else if (uArtFx > 2.5 && uArtFx < 3.5) art = mix(uA, uB, smoothstep(0.15, 0.85, lum)) * (0.2 + lum * 1.3);
+        else if (uArtFx > 3.5 && uArtFx < 4.5) { float band = exp(-pow((vUv.x + vUv.y * 0.4 - fract(uBeat / 4.0) * 1.8 + 0.2) * 6.0, 2.0));
+          art += art * band * 1.1 + smoothstep(0.6, 1.0, lum) * uPulse * 0.5; }
+        else if (uArtFx > 4.5 && uArtFx < 5.5) art = mix(art, (abs(art - 0.5) * 2.0).bgr, 0.5 + 0.5 * sin(uBeat * 0.785));
+        else if (uArtFx > 5.5 && uArtFx < 6.5) art = mix(vec3(lum), art, clamp(uPulse * 1.6, 0.0, 1.0));
+        art *= (0.7 + 0.45 * uPulse * uLive) * (1.0 - 0.3 * uChill);
+        outc = mix(outc, art + col * lv * 0.35, uArtMix);
       }
       // Live camera on the dancers: tone-mapped, with faint scan lines and a vignette, like a broadcast feed
+      // The camera films only the dancers, on black, so they can be cut out (key = brightness). Styles: 0 broadcast,
+      // 1 giants over the art (or the generative look), 2 triptych with mirrored sides, 3 neon silhouettes.
       if (uCamMix > 0.001) {
-        vec3 c = texture2D(uCam, vUv).rgb; c = pow(min(c * 1.6, vec3(1.0)), vec3(0.4545));
-        c *= (0.93 + 0.07 * sin(vUv.y * 700.0)) * (1.0 - 0.45 * length((vUv - 0.5) * vec2(1.0, 1.6)));
-        outc = mix(outc, c * 1.15, uCamMix);
+        vec2 cuv = vUv;
+        if (uCamFx > 1.5 && uCamFx < 2.5) { float t3 = vUv.x * 3.0, i3 = floor(t3); cuv.x = fract(t3); if (i3 != 1.0) cuv.x = 1.0 - cuv.x; cuv.x = 0.33 + cuv.x * 0.34; }
+        vec3 c = pow(min(texture2D(uCam, cuv).rgb * 1.6, vec3(1.0)), vec3(0.4545));
+        float key = smoothstep(0.03, 0.12, dot(c, vec3(0.299, 0.587, 0.114)));
+        vec3 cam;
+        if (uCamFx < 0.5) cam = c * (0.93 + 0.07 * sin(vUv.y * 700.0)) * (1.0 - 0.45 * length((vUv - 0.5) * vec2(1.0, 1.6))) + outc * 0.25 * (1.0 - key);
+        else if (uCamFx < 1.5) cam = mix(outc * 0.55, c * 1.15, key);
+        else if (uCamFx < 2.5) cam = mix(outc * 0.3, c * mix(vec3(1.0), uA * 1.4, step(1.0, abs(floor(vUv.x * 3.0) - 1.0))), key);
+        else { float e = key * (1.0 - smoothstep(0.35, 0.8, dot(c, vec3(0.333)))); cam = outc * 0.35 * (1.0 - key) + mix(uA, uB, vUv.y) * (key * 0.35 + e * 1.6) * (0.7 + 0.5 * uPulse); }
+        outc = mix(outc, cam, uCamMix);
       }
       gl_FragColor = vec4(outc, 1.0);
     }` });
@@ -1033,9 +1063,9 @@ for (const side of [-1, 1]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(8
 // camera at the stage front films the dancers and the big screen shows the feed. It renders only while shown, small,
 // every other frame.
 let festArt = [];
-const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0 };
+const screenShow = { tex: null, next: null, nextFor: null, art: 0, artTo: 0, until: -1, kb: 0, kbDir: [0, 0], cam: 0, camTo: 0, camUntil: -1, lastCam: -1e9, bar: null, frame: 0, fx: 0, camFx: 0, layered: false };
 const bcTarget = new THREE.WebGLRenderTarget(512, 196, { samples: 0 });
-const bcCam = new THREE.PerspectiveCamera(24, 512 / 196, 0.1, 80);
+const bcCam = new THREE.PerspectiveCamera(24, 512 / 196, 0.1, 80), bcClear = new THREE.Color(); bcCam.layers.set(5);
 function nextArt() {
   if (!festArt.length || screenShow.nextFor) return;
   const f = festArt[Math.floor(Math.random() * festArt.length)]; screenShow.nextFor = f;
@@ -1052,13 +1082,13 @@ function updateScreen(beat, bar, dt, t) {
     S.bar = bar;
     if (S.camTo && bar >= S.camUntil) S.camTo = 0;
     // The camera: rarely (about one phrase in ten, two minutes apart at least), only with dancers on stage
-    if (!S.camTo && stageSet.size && t - S.lastCam > 120 && Math.random() < 0.1) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; }
+    if (!S.camTo && stageSet.size && t - S.lastCam > 60 && Math.random() < 0.2) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; S.camFx = Math.floor(Math.random() * 4); }
     // Art: 8 or 16 bars of a still, then 8-16 bars of the generative looks; the next still loads in the meantime
     if (S.artTo && bar >= S.until) { S.artTo = 0; S.until = bar + (Math.random() < 0.5 ? 8 : 16); nextArt(); }
     else if (!S.artTo && bar >= S.until && S.next) {
       if (S.tex && S.tex !== S.next) S.tex.dispose();
       S.tex = S.next; S.next = null; S.artTo = 1; S.until = bar + (Math.random() < 0.5 ? 8 : 16); S.kb = 0;
-      S.kbDir = [Math.random() * 2 - 1, Math.random() * 2 - 1];
+      S.kbDir = [Math.random() * 2 - 1, Math.random() * 2 - 1]; S.fx = Math.random() < 0.15 ? 0 : 1 + Math.floor(Math.random() * 7);
     }
   }
   if (!S.next && !S.artTo) nextArt();
@@ -1072,15 +1102,18 @@ function updateScreen(beat, bar, dt, t) {
     const xs = (a > A ? A / a : 1) / z, ys = (a > A ? 1 : a / A) / z;
     u.uArtXf.value.set(xs, ys, S.kbDir[0] * (1 - xs) * 0.4 * Math.min(1, S.kb / 30), S.kbDir[1] * (1 - ys) * 0.4 * Math.min(1, S.kb / 30));
   }
-  u.uCamMix.value = S.cam;
+  u.uCamMix.value = S.cam; u.uArtFx.value = S.fx; u.uCamFx.value = S.camFx;
   if (S.cam > 0.01 && (S.frame++ % 2 === 0)) {
     // A slow dolly across the front of the stage, framing the dancers
     const xs = [...stageSet].map(a => a.obj.position.x), cx = xs.length ? xs.reduce((p, q) => p + q, 0) / xs.length : 0;
     bcCam.position.set(cx + Math.sin(t * 0.15) * 1.8, 1.3 + Math.sin(t * 0.11) * 0.2, 5.2);
     bcCam.lookAt(cx, 1.0, 0);
-    const vis = festScreen.visible; festScreen.visible = false;  // never film the screen it's being shown on
-    renderer.setRenderTarget(bcTarget); renderer.render(scene, bcCam); renderer.setRenderTarget(null);
-    festScreen.visible = vis;
+    // Film only the dancers (layer 5, plus every light), on black
+    if (!S.layered) { scene.traverse(o => { if (o.isLight) o.layers.enable(5); }); S.layered = true; }
+    for (const av of avatars) if (!av.bcLayer) { av.obj.traverse(o => o.layers.enable(5)); av.bcLayer = true; }
+    const bg = scene.background; scene.background = null; renderer.getClearColor(bcClear); const ca = renderer.getClearAlpha();
+    renderer.setClearColor(0x000000, 1); renderer.setRenderTarget(bcTarget); renderer.clear(); renderer.render(scene, bcCam); renderer.setRenderTarget(null);
+    renderer.setClearColor(bcClear, ca); scene.background = bg;
     u.uCam.value = bcTarget.texture;
   }
 }
