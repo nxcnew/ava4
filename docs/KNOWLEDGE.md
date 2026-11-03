@@ -10,7 +10,7 @@ Running context for this project: what was decided, why, and what's still open. 
 
 **Art filters** (in the screen shader, the equivalent of CSS filters):
 
-- **What they are:** the screen is inside the WebGL canvas, so CSS can't reach it. `uArtFx` is picked per still (15% plain): 1 hue drift, 2 one colour kept and the rest grey, 3 gradient map in the stage palette, 4 a highlight sweep per bar plus bright spots flashing on the kick, 5 chrome/solarise breathing in, 6 greyscale with colour flashing on the kick, 7 a ripple with colour fringes on the kick.
+- **What they are:** the screen is inside the WebGL canvas, so CSS can't reach it. `uArtFx` is picked per still (15% plain): 1 hue drift, 2 one colour kept and the rest grey, 3 gradient map in the stage palette, 4 a highlight sweep per bar plus bright spots flashing on the kick, 5 chrome (cool silver with metallic highlights; the earlier solarise inverted colours and looked wrong), 6 greyscale with colour flashing on the kick, 7 a ripple with colour fringes on the kick.
 - **Cost:** 1-3 texture taps.
 
 **Camera feed:**
