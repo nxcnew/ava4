@@ -178,14 +178,16 @@ ul.list:empty{display:none}
 .nogl p{margin:0;color:var(--muted);line-height:1.55}
 
 @media (max-width:760px){
-  .panel{top:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;max-height:52%}
+  /* Phones: the player sits at the top, the panel owns the bottom edge; the title and beat readout sit under the player */
+  .panel{top:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;max-height:60%}
+  .hud{top:calc(76px + env(safe-area-inset-top,0px))}
   .panel-bar,.panel-edge{display:none!important}
   .panel.away{transform:none;pointer-events:auto}
-  .player{right:max(12px,env(safe-area-inset-right,0px));left:max(12px,env(safe-area-inset-left,0px));bottom:calc(52% + 24px);gap:6px;padding:8px}
+  .player{right:max(12px,env(safe-area-inset-right,0px));left:max(12px,env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));bottom:auto;gap:6px;padding:8px}
   .pvol{display:none}
   .panel-toggle{display:flex;justify-content:space-between;align-items:center;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 14px;font-weight:600}
   .panel.collapsed .panel-body{display:none}
-  .drops{width:calc(100% - 24px);left:50%;top:calc(112px + env(safe-area-inset-top,0px));transform:translateX(-50%);gap:8px;flex-wrap:nowrap}
+  .drops{width:calc(100% - 24px);left:50%;top:calc(160px + env(safe-area-inset-top,0px));transform:translateX(-50%);gap:8px;flex-wrap:nowrap}
   .drop{flex:1 1 0;min-width:0;padding:12px 10px}
   .drop p{display:none}
   .drop-head{flex-direction:column;align-items:flex-start;gap:6px;padding-right:22px}
@@ -3961,10 +3963,22 @@ edgeEl.addEventListener('dragenter', () => { if (autoHide) openSoon(0); });
 desktopHover.addEventListener?.('change', () => setAutoHide(autoHide));
 try { if (localStorage.getItem('panelAutoHide') === '1') setAutoHide(true); } catch (_) {}
 
-$('#panelToggle').addEventListener('click', () => {
-  const p = $('#panel'); p.classList.toggle('collapsed');
-  $('#panelToggle').setAttribute('aria-expanded', String(!p.classList.contains('collapsed')));
-});
+// Phones: the panel is a bottom sheet that starts collapsed and never stays open: 3 s after the last touch, scroll or
+// change inside it, it folds away again (tapping the stage folds it at once).
+const phoneUI = matchMedia('(max-width: 760px)');
+let sheetTimer = 0;
+function setSheet(open) {
+  const p = $('#panel'); p.classList.toggle('collapsed', !open);
+  $('#panelToggle').setAttribute('aria-expanded', String(open));
+  clearTimeout(sheetTimer);
+  if (open && phoneUI.matches) sheetTimer = setTimeout(() => setSheet(false), 3000);
+}
+$('#panelToggle').addEventListener('click', () => setSheet($('#panel').classList.contains('collapsed')));
+for (const ev of ['pointerdown', 'input', 'change', 'scroll', 'keydown'])
+  $('#panel').addEventListener(ev, e => { if (phoneUI.matches && !$('#panel').classList.contains('collapsed') && e.target !== $('#panelToggle')) setSheet(true); }, { capture: true, passive: true });
+canvas.addEventListener('pointerdown', () => { if (phoneUI.matches) setSheet(false); });
+if (phoneUI.matches) setSheet(false);
+phoneUI.addEventListener?.('change', () => setSheet(!phoneUI.matches));
 
 /* Floating drop cards: each one minimises into its own icon in the panel and flies back out from there */
 function flyBetween(card, icon, toIcon) {
