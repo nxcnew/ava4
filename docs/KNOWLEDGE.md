@@ -6,6 +6,27 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v17 - 2026-11-03 - Screen art filters, camera styles, booth face, dim crowd, originals guard
+
+**Art filters** (in the screen shader, the equivalent of CSS filters):
+
+- **What they are:** the screen is inside the WebGL canvas, so CSS can't reach it. `uArtFx` is picked per still (15% plain): 1 hue drift, 2 one colour kept and the rest grey, 3 gradient map in the stage palette, 4 a highlight sweep per bar plus bright spots flashing on the kick, 5 chrome/solarise breathing in, 6 greyscale with colour flashing on the kick, 7 a ripple with colour fringes on the kick.
+- **Cost:** 1-3 texture taps.
+
+**Camera feed:**
+
+- **What it films:** only the dancers (layer 5; lights are enabled on that layer too), on black, so they can be keyed by brightness.
+- **Styles (`uCamFx`):** 0 broadcast, 1 giants over the art or generative look, 2 triptych with mirrored tinted sides, 3 neon gradient silhouettes.
+- **Frequency:** about 1 phrase in 7, at least 90 s apart (owner: slightly more than before, not too often).
+
+**Robustness:** a screen image that fails to load is dropped from the pool, with a 5 s pause. Before, it was retried every frame.
+
+**Booth face:** a dim dot-grid LED texture tinted with the theme colour (`festBoothFace`). Before, it was a `festStrip` plane flashing at full brightness.
+
+**Crowd:** back to subtle silhouettes. Colours are muted 45% towards grey and scaled by `DIM` 0.075.
+
+**Guard:** `scripts/pre-commit`, installed in `.git/hooks`, refuses commits that stage `*-original/` or `.secrets/` files, including the watcher's commits.
+
 ### v16 - 2026-11-03 - Stage screen art and live camera; realistic crowd; speakers on the truss; lights snap on the kick
 
 **Stage screen (`updateScreen`):**
