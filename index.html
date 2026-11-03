@@ -1224,7 +1224,7 @@ function laserTarget(h, s, look, bt, out) {
     default: { const alt = Math.floor(bt) % 2 ? 1 : -1; return out.set(-(h.u - 0.5) * 20 * alt + s * 4, 1.5, 11); }  // criss-cross, flips every beat
   }
 }
-const laserT = new THREE.Vector3();
+const laserT = new THREE.Vector3(), laserO = new THREE.Vector3();
 // level: 0..1 overall brightness. mode 0: a few soft beams from the top row. mode 1 (laser show): one row leads each
 // bar (floor, truss, towers in turn) with full fans, so the beams draw one clear pattern, not a web. mode 2 (the
 // downbeat of a hit bar): every row at once, for that beat only.
@@ -1241,11 +1241,14 @@ function updateLasers(bt, bar, pulse, level, mode, seed) {
     const on = mode === 2 || (mode === 1 ? h.row === lead : h.row === 'top' && h.k % 2 === mod(Math.floor(bt), 2));
     const lv = on ? level * (0.55 + 0.45 * pulse) : 0;
     for (let b = 0; b < LASER_F; b++) {
-      const idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full && !single || b === 3);
+      // Parallel looks: three emitters side by side, same direction (true parallel beams). Criss-cross: three beams a
+      // head, so it never gets crowded. Fans, tunnels and sheets: the full fan.
+      const narrow = single || look === 6, idx = h.i * LASER_F + b, beamOn = lv > 0.001 && (full ? !narrow || Math.abs(b - 3) <= 1 : b === 3);
       if (beamOn) {
-        const d = laserTarget(h, b / (LASER_F - 1) - 0.5, look, bt, laserT).sub(h.p), len = d.length();
+        const d = laserTarget(h, single ? 0 : b / (LASER_F - 1) - 0.5, look, bt, laserT).sub(h.p), len = d.length();
         laserE.set(-Math.atan2(d.y, Math.hypot(d.x, d.z)), Math.atan2(d.x, d.z), 0);
-        L.m.setMatrixAt(idx, laserM.compose(h.p, laserQ.setFromEuler(laserE), laserS.set(1, 1, len * 1.12)));
+        laserO.copy(h.p); if (single) h.row === 'side' ? laserO.y += (b - 3) * 0.3 : laserO.x += (b - 3) * 0.3;
+        L.m.setMatrixAt(idx, laserM.compose(laserO, laserQ.setFromEuler(laserE), laserS.set(1, 1, len * 1.12)));
       } else L.m.setMatrixAt(idx, laserM.makeScale(0, 0, 0));
       const t = h.row === 'side' ? 1 : Math.abs(h.p.x) / 12;                                    // 0 at the centre, 1 at the edges
       if (scheme === 0) laserC.copy(cA); else if (scheme === 1) laserC.copy(cA).lerp(cB, t); else laserC.copy((h.i + b) % 2 ? cA : cB);
