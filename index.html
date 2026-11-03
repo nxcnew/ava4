@@ -1101,35 +1101,147 @@ for (let i = 0; i < 16; i++) {
 }
 // Strobes on the truss
 const strobes = Array.from({ length: 8 }, (_, i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.5), additive(0xffffff, 0)); m.position.set((i - 3.5) * 3.2, 10.0, 3.4); festG.add(m); return m; });
-// Flame jets along the front edge
-const flameJets = Array.from({ length: 6 }, (_, j) => {
-  const n = 60, g = new THREE.BufferGeometry();
+// Front edge of the stage: a row of low wedge monitors (below knee height), with flame machines in some of the gaps
+// and spark fountains in others. All pyro comes out of these machines.
+const FRONT_Z = 4.45, FLAME_X = [-13, -7.8, -2.6, 2.6, 7.8, 13], SPARK_X = [-10.4, -5.2, 5.2, 10.4];
+(() => {
+  const cab = new THREE.MeshStandardMaterial({ color: 0x0c0c11, roughness: 0.55, metalness: 0.35 });
+  // Wedge monitor: a side profile, extruded across; tall at the audience side, its sloping face aimed at the performers
+  const wedge = new THREE.ExtrudeGeometry(new THREE.Shape([0, 0, 0.52, 0, 0.52, 0.16, 0.12, 0.4, 0, 0.4].reduce((v, n, i, a) => i % 2 ? v : [...v, new THREE.Vector2(n, a[i + 1])], [])),
+    { depth: 0.62, bevelEnabled: false }).rotateY(Math.PI / 2).translate(-0.31, 0, 0.26);
+  const xs = [];
+  for (let x = -14.4; x <= 14.41; x += 1.6) if (![...FLAME_X, ...SPARK_X].some(m => Math.abs(m - x) < 0.6)) xs.push(x);
+  const wedges = new THREE.InstancedMesh(wedge, cab, xs.length), m = new THREE.Matrix4();
+  xs.forEach((x, i) => wedges.setMatrixAt(i, m.makeRotationY((Math.random() - 0.5) * 0.08).setPosition(x, FEST_DECK_TOP, FRONT_Z)));
+  festG.add(wedges);
+  // Flame machine: a tapered hexagonal column with a nozzle. Spark fountain: a low box with a nozzle.
+  const flameBox = mergeGeometries([new THREE.CylinderGeometry(0.15, 0.2, 0.62, 6).translate(0, 0.31, 0), new THREE.CylinderGeometry(0.05, 0.06, 0.08, 10).translate(0, 0.66, 0)]);
+  const sparkBox = mergeGeometries([new THREE.BoxGeometry(0.34, 0.26, 0.34).translate(0, 0.13, 0), new THREE.CylinderGeometry(0.03, 0.04, 0.06, 8).translate(0, 0.29, 0)]);
+  [[flameBox, FLAME_X], [sparkBox, SPARK_X]].forEach(([g, list]) => {
+    const im = new THREE.InstancedMesh(g, cab, list.length);
+    list.forEach((x, i) => im.setMatrixAt(i, m.makeTranslation(x, FEST_DECK_TOP, FRONT_Z + 0.1)));
+    festG.add(im);
+  });
+})();
+// Flames: a billboard per machine with a turbulent fire shader (white-hot core, yellow, orange, smoky red edges, a blue
+// root at the nozzle). A burst shoots up in a fraction of a second, burns, then the valve shuts: the fireball lifts
+// off the nozzle and burns out.
+const FLAME_H = 5.2;
+const flameVS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }';
+const flameFS = `varying vec2 vUv; uniform float uT, uAge, uSeed;
+  float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float ns(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hs(i), hs(i + vec2(1.0, 0.0)), f.x), mix(hs(i + vec2(0.0, 1.0)), hs(i + vec2(1.0, 1.0)), f.x), f.y); }
+  float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { v += a * ns(p); p = p * 2.03 + 1.7; a *= 0.5; } return v; }
+  void main(){
+    float a = uAge, y = vUv.y, x = vUv.x - 0.5;
+    float top = min(1.0, a / 0.16) * (0.82 + 0.18 * min(1.0, a)), cut = max(0.0, (a - 0.5) * 1.5);
+    float body = smoothstep(top, top - 0.22, y) * smoothstep(cut, cut + 0.12, y);
+    vec2 q = vec2(x * 3.2, y * 4.2 - uT * 5.5 + uSeed);
+    float turb = fbm(q + vec2(fbm(q * 0.8 + uT * 0.7), 0.0));
+    float w = 0.05 + 0.33 * smoothstep(0.0, 0.75, y);
+    float shape = smoothstep(w, w * 0.25, abs(x + (turb - 0.5) * 0.3 * y));
+    float heat = clamp(shape * body * (0.45 + turb) * 1.25 - y * 0.3 * (0.6 + a), 0.0, 1.6);
+    vec3 col = mix(vec3(0.5, 0.04, 0.0), vec3(1.0, 0.42, 0.04), smoothstep(0.08, 0.45, heat));
+    col = mix(col, vec3(1.0, 0.82, 0.4), smoothstep(0.45, 0.9, heat));
+    col = mix(col, vec3(1.0, 0.97, 0.88), smoothstep(0.9, 1.35, heat));
+    col += vec3(0.15, 0.3, 1.0) * smoothstep(0.07, 0.0, y) * step(cut, 0.0) * shape;
+    gl_FragColor = vec4(col * heat * (1.0 - smoothstep(0.85, 1.35, a)) * 1.5, 1.0);
+  }`;
+const flames = FLAME_X.map(x => {
+  const mat = new THREE.ShaderMaterial({ vertexShader: flameVS, fragmentShader: flameFS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide, toneMapped: false, fog: false, uniforms: { uT: { value: 0 }, uAge: { value: 9 }, uSeed: { value: Math.random() * 20 } } });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.9, FLAME_H).translate(0, FLAME_H / 2, 0), mat);
+  m.position.set(x, FEST_DECK_TOP + 0.7, FRONT_Z + 0.1); m.visible = false; m.frustumCulled = false; festG.add(m);
+  return m;
+});
+function fireFlame(i) { const f = flames[i]; if (f) { f.material.uniforms.uAge.value = 0; f.visible = true; } }
+// Spark fountains (gerbs): showers of tiny white-gold sparks, a few seconds at a time
+const SPARK_N = 160, sparkPts = (() => {
+  const n = SPARK_N * SPARK_X.length, g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.1, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.09, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   p.frustumCulled = false; p.visible = false; festG.add(p);
-  return { p, x: (j - 2.5) * 5.2, age: new Float32Array(n).fill(9), vel: new Float32Array(n * 3), active: 0, n };
-});
-function fireJets() { flameJets.forEach(f => { f.active = 0.9; f.p.visible = true; }); }
-const fireworks = Array.from({ length: 16 }, () => {
-  const n = 170, g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  return { p, n, age: new Float32Array(n).fill(9), vel: new Float32Array(n * 3), on: new Float32Array(SPARK_X.length) };
+})();
+function fireSparks(i, secs) { sparkPts.on[i] = Math.max(sparkPts.on[i], secs); sparkPts.p.visible = true; }
+// Fireworks: shells launch from behind the stage, climb on a visible comet trail and burst on the beat.
+// Kinds: peony (coloured sphere), ring, willow (slow golden trails that droop), glitter (white, twinkling).
+const FW_N = 170, fireworks = Array.from({ length: 12 }, () => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(FW_N * 3), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(FW_N * 3), 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.0, map: glowTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
   p.frustumCulled = false; p.visible = false; festG.add(p);
-  return { p, vel: new Float32Array(n * 3), life: 0, n };
+  return { p, vel: new Float32Array(FW_N * 3), life: 0, rise: 0, kind: 'peony', from: new THREE.Vector3(), to: new THREE.Vector3(), col: new THREE.Color(), age: 0 };
 });
-function launchFirework() {
-  const fw = fireworks.find(f => f.life <= 0); if (!fw) return;
-  const cx = (Math.random() * 2 - 1) * 28, cy = 18 + Math.random() * 12, cz = -20 - Math.random() * 12;
-  const pos = fw.p.geometry.attributes.position.array, speed = 6 + Math.random() * 5;
-  for (let i = 0; i < fw.n; i++) {
-    const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u), sp = speed * (0.7 + Math.random() * 0.3);
-    pos.set([cx, cy, cz], i * 3); fw.vel.set([r * Math.cos(a) * sp, u * sp, r * Math.sin(a) * sp], i * 3);
-  }
-  fw.p.material.color.set(PALETTE_HEX[Math.floor(Math.random() * 4)]).lerp(new THREE.Color(0xffffff), 0.25);
-  fw.p.geometry.attributes.position.needsUpdate = true; fw.life = 2.4; fw.p.visible = true;
+const FW_KINDS = {
+  peony: { speed: 9, drag: 0.985, grav: 4.5, life: 2.2, size: 1.0 },
+  ring: { speed: 10, drag: 0.983, grav: 3.5, life: 2.0, size: 1.0 },
+  willow: { speed: 6.5, drag: 0.965, grav: 2.2, life: 3.8, size: 0.8 },
+  glitter: { speed: 8, drag: 0.975, grav: 3.0, life: 2.6, size: 0.7 },
+};
+// riseSecs: how long the shell climbs, so the burst lands on a chosen beat
+function launchFirework(kind, x, riseSecs) {
+  const fw = fireworks.find(f => f.life <= 0 && f.rise <= 0); if (!fw) return;
+  fw.kind = kind || pick(Object.keys(FW_KINDS));
+  const cx = x !== undefined ? x : (Math.random() * 2 - 1) * 26;
+  fw.from.set(cx * 0.8, FEST_GROUND + 2, -16 - Math.random() * 6);
+  fw.to.set(cx, 20 + Math.random() * 10, fw.from.z - 4 - Math.random() * 6);
+  fw.col.set(fw.kind === 'willow' ? 0xffb050 : fw.kind === 'glitter' ? 0xffffff : PALETTE_HEX[Math.floor(Math.random() * 4)]).lerp(new THREE.Color(0xffffff), 0.2);
+  fw.rise = fw.riseT = riseSecs || 1.1; fw.life = 0; fw.age = 0;
+  fw.p.material.size = 0.5; fw.p.material.opacity = 1; fw.p.visible = true;
 }
-let lastFireworkBar = -1, lastJetBar = -1, festWasChill = true;
+function burstFirework(fw) {
+  const K = FW_KINDS[fw.kind], pos = fw.p.geometry.attributes.position.array, col = fw.p.geometry.attributes.color.array;
+  const tilt = (Math.random() - 0.5) * 0.8;
+  for (let i = 0; i < FW_N; i++) {
+    let vx, vy, vz;
+    if (fw.kind === 'ring') { const a = i / FW_N * Math.PI * 2; vx = Math.cos(a); vy = Math.sin(a) * Math.cos(tilt); vz = Math.sin(a) * Math.sin(tilt); }
+    else { const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u); vx = r * Math.cos(a); vy = u; vz = r * Math.sin(a); }
+    const sp = K.speed * (fw.kind === 'ring' ? 0.95 + Math.random() * 0.1 : 0.7 + Math.random() * 0.3);
+    fw.to.toArray(pos, i * 3); fw.vel.set([vx * sp, vy * sp, vz * sp], i * 3); fw.col.toArray(col, i * 3);
+  }
+  fw.life = K.life; fw.p.material.size = K.size;
+  fw.p.geometry.attributes.color.needsUpdate = true;
+}
+function updateFireworks(dt) {
+  for (const fw of fireworks) {
+    if (fw.rise <= 0 && fw.life <= 0) continue;
+    const pos = fw.p.geometry.attributes.position.array, col = fw.p.geometry.attributes.color.array;
+    if (fw.rise > 0) {        // climbing: a bright head with a short fading trail behind it
+      fw.rise -= dt;
+      const k = 1 - Math.max(0, fw.rise) / fw.riseT, e = 1 - (1 - k) * (1 - k);
+      for (let i = 0; i < FW_N; i++) {
+        const back = Math.max(0, e - i * 0.0009);
+        _fv.lerpVectors(fw.from, fw.to, back).toArray(pos, i * 3);
+        const b = i < 40 ? (1 - i / 40) * 0.8 : 0; col[i * 3] = b; col[i * 3 + 1] = b * 0.85; col[i * 3 + 2] = b * 0.6;
+      }
+      fw.p.geometry.attributes.color.needsUpdate = true;
+      if (fw.rise <= 0) burstFirework(fw);
+    } else {
+      const K = FW_KINDS[fw.kind];
+      fw.life -= dt; fw.age += dt;
+      for (let i = 0; i < FW_N * 3; i += 3) {
+        fw.vel[i + 1] -= K.grav * dt; fw.vel[i] *= K.drag; fw.vel[i + 1] *= K.drag; fw.vel[i + 2] *= K.drag;
+        pos[i] += fw.vel[i] * dt; pos[i + 1] += fw.vel[i + 1] * dt; pos[i + 2] += fw.vel[i + 2] * dt;
+      }
+      const fade = Math.min(1, fw.life / (K.life * 0.45));
+      for (let i = 0; i < FW_N; i++) {
+        const tw = fw.kind === 'glitter' ? (Math.random() < 0.35 ? 1.3 : 0.15) : fw.kind === 'willow' ? 0.7 + 0.3 * Math.random() : 1;
+        col[i * 3] = fw.col.r * fade * tw; col[i * 3 + 1] = fw.col.g * fade * tw; col[i * 3 + 2] = fw.col.b * fade * tw;
+      }
+      fw.p.geometry.attributes.color.needsUpdate = true;
+      if (fw.life <= 0) fw.p.visible = false;
+    }
+    fw.p.geometry.attributes.position.needsUpdate = true;
+  }
+}
+// Pyro cues, all on the beat: a flame chase on the first bar of every 16-bar phrase, spark fountains in the middle of
+// phrases now and then, a shell or two every 8 bars. The big moment is when the beat comes back after a breakdown or
+// a quiet passage: on that downbeat, every flame fires, the fountains open and a mixed volley goes up.
+let pyroBeat = -Infinity, festWasChill = true, hadGroove = false, quietSince = 0, bigPending = false;
 function festUpdate(beat, pulse, dt, t) {
   const u = festScreenMat.uniforms; u.uBeat.value = beat; u.uPulse.value = pulse; u.uLive.value = liveMix; u.uChill.value = chillMix; u.uMode.value = mod(choreo.seg, 4);
   const bar = Math.floor(beat / 4), groove = musicOn() && chillMix < 0.5, energy = liveMix * (1 - 0.75 * chillMix);
@@ -1187,38 +1299,65 @@ function festUpdate(beat, pulse, dt, t) {
   // Strobes flash on the beat in the busiest passages; bigger hit on the downbeat
   const strobeOn = groove && mod(bar, 8) >= 6;
   strobes.forEach((s, i) => { s.material.opacity = strobeOn && fr < 0.08 && (i + k) % 2 === 0 ? 0.9 : (k % 4 === 0 && fr < 0.06 && groove ? 0.6 : 0); });
-  // Flame jets: every 16 bars on the downbeat, and when the drop lands
-  if (groove && bar !== lastJetBar && mod(bar, 16) === 0 && mod(beat, 4) < 0.4) { lastJetBar = bar; fireJets(); }
-  let flameGlow = 0;
-  flameJets.forEach(f => {
-    const pos = f.p.geometry.attributes.position.array, col = f.p.geometry.attributes.color.array;
-    let alive = 0;
-    for (let i = 0; i < f.n; i++) {
-      if (f.age[i] > 1.1 && f.active > 0 && Math.random() < 0.5) { f.age[i] = 0; pos.set([f.x + (Math.random() - 0.5) * 0.3, FEST_DECK_TOP, 4.4], i * 3); f.vel.set([(Math.random() - 0.5) * 0.8, 9 + Math.random() * 5, (Math.random() - 0.5) * 0.8], i * 3); }
-      if (f.age[i] < 1.1) {
-        f.age[i] += dt; alive++;
-        pos[i * 3] += f.vel[i * 3] * dt; pos[i * 3 + 1] += f.vel[i * 3 + 1] * dt; pos[i * 3 + 2] += f.vel[i * 3 + 2] * dt; f.vel[i * 3 + 1] -= 6 * dt;
-        const a = Math.max(0, 1 - f.age[i] / 1.1); col[i * 3] = a; col[i * 3 + 1] = a * a * 0.6; col[i * 3 + 2] = a * a * a * 0.2;
-      } else { col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0; }
+  // Pyro cues (see above). Fired on beat boundaries only.
+  const spb = 60 / Math.max(60, clock.bpm);
+  if (!musicOn()) hadGroove = false;
+  if (groove && festWasChill && hadGroove && beat - quietSince >= 8) bigPending = true;   // back after 2+ quiet bars
+  if (!groove && !festWasChill) quietSince = beat;
+  if (groove) hadGroove = true;
+  festWasChill = !groove;
+  if (groove && k !== pyroBeat && fr < 0.25) {
+    pyroBeat = k;
+    const b4 = mod(k, 4), phrase = mod(bar, 16);
+    if (bigPending && b4 === 0) {
+      bigPending = false;
+      flames.forEach((_, i) => fireFlame(i));
+      SPARK_X.forEach((_, i) => fireSparks(i, spb * 8));
+      ['peony', 'ring', 'willow', 'glitter', 'peony', 'willow'].forEach((kd, i) => setTimeout(() => launchFirework(kd, (i - 2.5) * 9, spb * 2 - i * 0.12), i * 120));
+    } else if (phrase === 0) {
+      // Chase from the outside in, a pair per beat, all six on beat 4
+      const pairs = [[0, 5], [1, 4], [2, 3], [0, 1, 2, 3, 4, 5]][b4];
+      pairs.forEach(fireFlame);
+    } else if (phrase === 8 && b4 === 0 && Math.random() < 0.6) {
+      const pair = Math.random() < 0.5 ? [0, 3] : [1, 2];
+      pair.forEach(i => fireSparks(i, spb * 8));
     }
-    f.active -= dt; if (!alive && f.active <= 0) f.p.visible = false;
-    flameGlow = Math.max(flameGlow, alive / f.n);
-    f.p.geometry.attributes.position.needsUpdate = true; f.p.geometry.attributes.color.needsUpdate = true;
+    if (mod(bar, 8) === 4 && b4 === 0) for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--) launchFirework(null, undefined, spb * 2); // bursts land 2 beats later
+  }
+  // Flames: advance each burst; billboard towards the camera around the vertical
+  let flameGlow = 0;
+  flames.forEach(f => {
+    if (!f.visible) return;
+    const u = f.material.uniforms; u.uAge.value += dt; u.uT.value = t;
+    f.rotation.y = Math.atan2(camera.position.x - f.position.x, camera.position.z - f.position.z);
+    flameGlow = Math.max(flameGlow, Math.max(0, 1 - u.uAge.value / 1.2));
+    if (u.uAge.value > 1.4) f.visible = false;
   });
   festFlameLight.intensity = flameGlow * 120;
-  // Fireworks: a pair every 4 bars in the groove, a big volley (plus flame jets) when the drop lands
-  if (groove && bar !== lastFireworkBar && mod(bar, 4) === 0 && mod(beat, 4) < 0.5) { lastFireworkBar = bar; launchFirework(); launchFirework(); }
-  if (groove && festWasChill) { for (let i = 0; i < 7; i++) setTimeout(launchFirework, i * 160); fireJets(); }
-  festWasChill = !groove;
-  fireworks.forEach(fw => {
-    if (fw.life <= 0) return;
-    fw.life -= dt;
-    const pos = fw.p.geometry.attributes.position.array;
-    for (let i = 0; i < fw.n * 3; i += 3) { fw.vel[i + 1] -= 4.5 * dt; fw.vel[i] *= 0.985; fw.vel[i + 1] *= 0.985; fw.vel[i + 2] *= 0.985; pos[i] += fw.vel[i] * dt; pos[i + 1] += fw.vel[i + 1] * dt; pos[i + 2] += fw.vel[i + 2] * dt; }
-    fw.p.geometry.attributes.position.needsUpdate = true;
-    fw.p.material.opacity = Math.min(1, fw.life * 0.9);
-    if (fw.life <= 0) fw.p.visible = false;
-  });
+  // Spark fountains
+  if (sparkPts.p.visible) {
+    const S = sparkPts, pos = S.p.geometry.attributes.position.array, col = S.p.geometry.attributes.color.array;
+    let alive = 0;
+    for (let i = 0; i < S.n; i++) {
+      const src = Math.floor(i / SPARK_N);
+      if (S.age[i] > 1.2 && S.on[src] > 0 && Math.random() < 0.25) {
+        S.age[i] = Math.random() * 0.2; pos.set([SPARK_X[src] + (Math.random() - 0.5) * 0.05, FEST_DECK_TOP + 0.3, FRONT_Z + 0.1], i * 3);
+        S.vel.set([(Math.random() - 0.5) * 1.4, 6.5 + Math.random() * 3, (Math.random() - 0.5) * 1.4], i * 3);
+      }
+      if (S.age[i] <= 1.2) {
+        S.age[i] += dt; alive++;
+        S.vel[i * 3 + 1] -= 9.8 * dt;
+        pos[i * 3] += S.vel[i * 3] * dt; pos[i * 3 + 1] += S.vel[i * 3 + 1] * dt; pos[i * 3 + 2] += S.vel[i * 3 + 2] * dt;
+        if (pos[i * 3 + 1] < FEST_DECK_TOP) S.age[i] = 9;
+        const a = Math.max(0, 1 - S.age[i] / 1.2) * (Math.random() < 0.15 ? 0.4 : 1);
+        col[i * 3] = a; col[i * 3 + 1] = a * 0.85; col[i * 3 + 2] = a * 0.55;
+      } else col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = 0;
+    }
+    for (let j = 0; j < S.on.length; j++) S.on[j] -= dt;
+    if (!alive && S.on.every(v => v <= 0)) S.p.visible = false;
+    S.p.geometry.attributes.position.needsUpdate = S.p.geometry.attributes.color.needsUpdate = true;
+  }
+  updateFireworks(dt);
 }
 // Offstage spots in the wings: in the stage setup only the performers are visible.
 function festWing(ix) {
