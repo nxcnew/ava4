@@ -1051,14 +1051,15 @@ const festCrowd = (() => {
     festG.add(mesh);
     return mesh;
   });
-  // Phones: each holder's right arm hangs from the shoulder and lifts the phone a few seconds after the music starts
-  // (everyone at their own moment), and lowers it when the music stops. Phones differ in size, grip (portrait or
+  // Phones: each holder's right arm hangs from the shoulder. While the music plays, each holder lifts their phone
+  // for a while, lowers it, lifts it again, each at their own moment and pace; all phones are down while there is
+  // no music. Phones differ in size, grip (portrait or
   // landscape) and screen tint; most have the flash on, as a glow on the stage side, only once the phone is up.
   const holders = people.filter(p => p.shape === 'phone'), nH = Math.max(1, holders.length);
   const TINTS = [0xa8c4ff, 0xdfe8ff, 0xffe6c4, 0xc4ffe4, 0xffc8ee, 0xf4f4f4];
   holders.forEach(p => {
     const sc = 0.85 + Math.random() * 0.4, land = Math.random() < 0.3;
-    p.phone = { lift: 0, delay: 2 + Math.random() * 14, flash: Math.random() < 0.75, tint: new THREE.Color(TINTS[Math.floor(Math.random() * TINTS.length)]),
+    p.phone = { lift: 0, up: false, wait: 2 + Math.random() * 14, flash: Math.random() < 0.75, tint: new THREE.Color(TINTS[Math.floor(Math.random() * TINTS.length)]),
       local: new THREE.Matrix4().makeTranslation(0, -ARM - 0.075, -0.035).multiply(new THREE.Matrix4().makeRotationZ(land ? Math.PI / 2 : 0))
         .multiply(new THREE.Matrix4().makeScale(sc, sc * (0.9 + Math.random() * 0.2), 1)) };
   });
@@ -1146,7 +1147,9 @@ function festUpdate(beat, pulse, dt, t) {
     p.mesh.setMatrixAt(p.i, crowdM.compose(crowdP.set(p.x + sway, y, p.z), crowdQ, crowdS.set(p.w, p.h, p.w)));
     if (p.phone) {
       const C = festCrowd, k = C.holders.indexOf(p), ph = p.phone;
-      ph.lift = clamp(ph.lift + dt * (festMusicT > ph.delay ? 0.4 : -0.6), 0, 1);
+      if (!festMusicT) { ph.up = false; ph.wait = 2 + Math.random() * 14; }                   // first lift a little after the music starts
+      else if ((ph.wait -= dt) <= 0) { ph.up = !ph.up; ph.wait = ph.up ? 8 + Math.random() * 20 : 5 + Math.random() * 18; }
+      ph.lift = clamp(ph.lift + dt * (ph.up ? 0.4 : -0.6), 0, 1);
       const up = easeIO(ph.lift);
       crowdM.multiply(C.shoulder).multiply(crowdM2.makeRotationZ(0.07 + (C.PHONE_ARM - 0.07) * up));
       C.phoneArms.setMatrixAt(k, crowdM);
