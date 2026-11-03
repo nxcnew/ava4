@@ -6,6 +6,26 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v20 - 2026-11-03 - One collapse/expand everywhere; pin for desktop; touch player fades
+
+**Collapse / expand**, the same on every device:
+
+- **Header arrow (`#panelCollapse`):** slides the panel away.
+- **Edge tab (`#panelExpand`):** a real button, "< Controls", shown whenever the panel is away. It brings the panel back.
+- **Portrait phones:** keep the bottom sheet, with the same chevron (down when open, up when collapsed).
+- **Why:** phone landscape (wider than 760px) used the desktop panel, whose only control was a hover-based auto-hide, so it couldn't be operated by touch.
+
+**Pin (`#panelPin`), desktop with a mouse only:**
+
+- **Pinned (default):** the panel stays open.
+- **Unpinned:** the old auto-hide: it slides away when the mouse leaves and returns at the right edge. Saved in localStorage as before.
+- **Touch screens:** the pin is hidden.
+
+**Touch screens (`hover: none`):**
+
+- **Panel:** starts collapsed. Open, it closes 3 s after the last touch, scroll or change inside it; tapping the stage closes it.
+- **Player:** fades to 0.18 opacity, wakes on touch (taps act at once) and fades 3 s later. It was stuck at 0.9.
+
 ### v19 - 2026-11-03 - Phone layout: player on top, self-closing controls sheet; screen timing fix
 
 **Phones** (max-width 760px):
