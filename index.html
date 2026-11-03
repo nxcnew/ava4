@@ -841,7 +841,7 @@ const heads = [[-3.6, 1.2, 0], [3.6, 1.2, 1], [-1.6, -2.4, 2], [1.6, -2.4, 3]].m
 });
 // Moving heads are programmed like a real lighting desk: every step they hit a cue position on the beat, hold for a
 // moment, then glide so they arrive exactly on the next beat. The look changes whenever the dance move changes.
-// Busy music: one step per beat. Quiet passage: one step per bar, slow glide. No music: parked, still.
+// Busy music: one step per beat, snapping on the kick. Quiet passage: a slow glide every two beats. No music: parked.
 const RIG_LOOKS = [
   // fan: pairs open and close on alternate beats
   (i, k) => { const out = k % 2 === 0; const xs = out ? [-3, 3, -1.6, 1.6] : [-1.2, 1.2, -0.5, 0.5]; return [xs[i], i < 2 ? 0.9 : -0.9]; },
@@ -853,12 +853,13 @@ const RIG_LOOKS = [
   (i, k) => { const b = mod(k, 4); if (b === 0) return [0, 0]; const ang = (i * Math.PI / 2) + b * Math.PI / 4; return [Math.cos(ang) * 2.4, Math.sin(ang) * 1.6]; },
 ];
 const easeIO = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
 function updateRig(beat, pulse, dt) {
   const calm = 1 - 0.75 * chillMix;
   const bar = Math.floor(beat / 4);
   const playing = liveMix > 0.5;
   const slow = chillMix > 0.5;
-  const stepLen = slow ? 4 : 1;                       // beats per step
+  const stepLen = slow ? 2 : 1;                       // beats per step
   const k = Math.floor(beat / stepLen), frac = beat / stepLen - k;
   const look = RIG_LOOKS[mod(choreo.seg, RIG_LOOKS.length)];
   heads.forEach((hd, i) => {
@@ -868,9 +869,10 @@ function updateRig(beat, pulse, dt) {
       hd.cur.lerp(new THREE.Vector3(hd.x * 0.4, 0, hd.z * 0.3), Math.min(1, dt * 1.2));
       hd.k = null;
     } else {
-      if (hd.k !== k) { hd.k = k; hd.from.copy(hd.cur); const [x, z] = look(i, k + 1); hd.to.set(x, 0, z); }
-      // Hold the hit for the first 30% of the step, then glide to land on the next beat.
-      const e = easeIO(clamp((frac - 0.3) / 0.7, 0, 1));
+      if (hd.k !== k) { hd.k = k; hd.from.copy(hd.cur); const [x, z] = look(i, k); hd.to.set(x, 0, z); }
+      // Snap on the kick: the move starts on the beat and settles within its first third (a quick ease-out), like a
+      // moving head hitting a cue. In quiet passages, a slow glide over the whole two-beat step instead.
+      const e = slow ? easeIO(frac) : easeOut(clamp(frac / 0.35, 0, 1));
       hd.cur.lerpVectors(hd.from, hd.to, e);
     }
     hd.light.target.position.copy(hd.cur);
@@ -1597,9 +1599,9 @@ function festUpdate(beat, pulse, dt, t) {
   if (C.phones.instanceColor) C.phones.instanceColor.needsUpdate = true;
   C.flashes.geometry.attributes.position.needsUpdate = C.flashes.geometry.attributes.color.needsUpdate = true;
   // Lasers and beams: hit a position on the beat, hold, glide to land on the next beat
-  const k = Math.floor(beat), fr = beat - k, e = easeIO(clamp((fr - 0.3) / 0.7, 0, 1));
+  const k = Math.floor(beat), fr = beat - k, e = easeOut(clamp(fr / 0.35, 0, 1)); // moves snap on the kick
   beams.forEach(B => {
-    if (B.k !== k) { B.k = k; B.from.copy(B.cur); const [x, z] = RIG_LOOKS[mod(choreo.seg + B.i, RIG_LOOKS.length)](B.i % 4, k + 1); B.to.set(x * 2.4, B.i % 2 ? FEST_DECK_TOP : FEST_GROUND, (B.i % 2 ? z : 6 + (B.i % 3) * 1.5)); } // onto the stage and the front rows
+    if (B.k !== k) { B.k = k; B.from.copy(B.cur); const [x, z] = RIG_LOOKS[mod(choreo.seg + B.i, RIG_LOOKS.length)](B.i % 4, k); B.to.set(x * 2.4, B.i % 2 ? FEST_DECK_TOP : FEST_GROUND, (B.i % 2 ? z : 6 + (B.i % 3) * 1.5)); } // onto the stage and the front rows
     B.cur.lerpVectors(B.from, B.to, e); B.m.lookAt(B.cur);
     B.m.material.color.copy(FEST_PAL[mod(B.i + bar, 4)]);
     B.m.material.opacity = (0.012 + 0.035 * ((B.i + k) % 2 ? pulse : pulse * 0.4)) * (0.3 + 0.7 * energy);

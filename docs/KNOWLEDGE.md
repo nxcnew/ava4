@@ -6,6 +6,42 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v16 - 2026-11-03 - Stage screen art and live camera; realistic crowd; speakers on the truss; lights snap on the kick
+
+**Stage screen (`updateScreen`):**
+
+- **Art:** from `screens/` (new library folder), or, until there is any, the 3:1-and-wider wallpapers.
+- **Cycle:** on phrase starts (every 8 bars) the big screen cross-fades between its generative looks (8-16 bars) and a still image (8-16 bars). The still slowly zooms and drifts (Ken Burns, uniform `uArtXf`) and pulses with the beat. With no music it rests on a drifting still.
+- **Loading:** one image is downloaded and decoded at a time, only when it is next. At most two textures exist; old ones are disposed.
+- **Live camera:** rarely (about 1 phrase in 10, at least 2 minutes apart, only with dancers on stage), 8 bars of a camera feed. `bcCam` dollies along the stage front, rendering into a 512x196 target every other frame, only while the feed shows. The main screen is hidden during that render so it never films itself.
+- **Side screens:** `festSideMat` shares the uniforms but has no art or feed.
+
+**`screens/` folder:** in `LIB_DIRS`, `make-manifest.sh` dirs, the watcher's ASSETS and `shrink-walls.sh` (PNG to JPEG). `screens-original/` is gitignored.
+
+**Crowd realism:**
+
+- **Outfits:** painted per fragment from body part, object-space position and `aStyle`:
+  - tops: stripes, a front/back print, two-tone, crop tops;
+  - waist and legs: a waistband, shorts, skirt and dress hems;
+  - sleeves: long, short or none.
+- **Colours:** weighted to black, white, grey, denim and muted tones.
+- **Hair:** tilted back (real hairline), plus a side part, long, ponytail, bun, lumpy curls and rarer beanies. 6% bald.
+- **Light:** `DIM` 0.22, down from 0.42.
+- **Bobbing:** offsets up to about 0.1 beat (about 50 ms), with per-person bob height.
+
+**Stage:**
+
+- Removed the hanging line arrays and the subwoofer stacks (lasers ran through them).
+- Two 5-cabinet speaker hangs sit on the middle truss over the dancers.
+- Removed the DJ figure and the side-stage guests; kept the booth and the 2 crew members.
+
+**Moving lights:**
+
+- The rig heads and the festival beam fixtures now start their move on the kick and settle in the first third of the beat (`easeOut`). Before, they held for 30% of the beat and glided to land on the next one, which read as late.
+- In quiet passages they glide over 2 beats (was a hold for a bar).
+
+**Testing:** `runtest.sh` copies the real `manifest.json` and uses a fresh Chrome profile per run (a cached manifest caused false 404s).
+
 ### v15 - 2026-11-03 - Busy stage; laser looks like real laser shows; wall PNG fix
 
 **Busy stage:** everything is cheap and mostly instanced.

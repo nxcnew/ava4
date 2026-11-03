@@ -7,3 +7,4 @@ amber-pipeline/
 # Local-only secrets (API keys); never pushed
 .secrets/
 walls-original/
+screens-original/

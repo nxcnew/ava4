@@ -27,7 +27,7 @@ def look(path):
             x += ch * math.cos(hh); y += ch * math.sin(hh)
     n = W * abs(H)
     return {'aspect': round(w / h, 3), 'px': max(w, h), 'x': round(x / n, 4), 'y': round(y / n, 4), 'l': round(l / n, 4)}
-dirs = ['avatars', 'crowd', 'dances', 'songs', 'walks', 'walls']
+dirs = ['avatars', 'crowd', 'dances', 'screens', 'songs', 'walks', 'walls']
 out = {}
 for d in dirs:
     if not os.path.isdir(d): continue
