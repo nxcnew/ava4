@@ -1065,7 +1065,7 @@ const festCrowd = (() => {
   const PANTS = [0x1a1d2e, 0x23324f, 0x101012, 0x4a4036, 0x6d6e72, 0x2f4f2f, 0x8a6b4a];
   const HAIRC = [0x0e0b09, 0x0e0b09, 0x0e0b09, 0x2b1b10, 0x2b1b10, 0x2b1b10, 0x4a2f1b, 0x4a2f1b, 0x8a6a3e, 0xd8b878, 0xd8b878, 0x8e3b1f, 0xc04080, 0x3060d0]; // mostly natural
   const any = a => a[Math.floor(Math.random() * a.length)];
-  const L = [-0.23, 1.44], R = [0.23, 1.44], UP = Math.PI - 0.4, PHONE_ARM = Math.PI - 0.15;
+  const L = [-0.23, 1.44], R = [0.23, 1.44], PHONE_ARM = Math.PI - 0.15;
   const downL = () => arm(...L, -0.07, fist()), downR = () => arm(...R, 0.07, fist());
   const shapes = {
     down: [downL(), downR()],
