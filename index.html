@@ -649,9 +649,9 @@ const wallPapers = [[-ROOM.side + 0.006, Math.PI / 2], [ROOM.side - 0.006, -Math
   if (x > 0) { m.geometry.dispose(); m.geometry = doorwayWall(WALL_W, WALL_H); }
   return m;
 });
-// Back wall behind the camera, in two copies: one pre-flipped on a layer only the mirror's camera renders, so it
-// reads correctly in the reflection, and one the main camera sees when you orbit round. Both face into the room,
-// so from outside the room they are culled and never block the view.
+// Back wall behind the camera, in two identical copies: one on a layer only the mirror's camera renders (so the
+// mirror reflects it, reversed like a real mirror) and one the main camera sees when you orbit round. Both face into
+// the room, so from outside the room they are culled and never block the view.
 const BACK_W = ROOM.side * 2, MIRROR_ONLY = 1, DIRECT_ONLY = 2;
 for (const layer of [MIRROR_ONLY, DIRECT_ONLY]) {
   const t = new THREE.CanvasTexture(stageBackdrop()); t.colorSpace = THREE.SRGBColorSpace;
@@ -698,9 +698,7 @@ async function setWallpaper(blob, which = 'both') {
       // Wide images: fill the height, crop the sides. Others: fill the full width and show the slice around the main face.
       if (a > A) { t.repeat.set(A / a, 1); t.offset.set((1 - A / a) / 2, 0); }
       else { const vis = a / A, { top } = faceWindow(faces, vis); t.repeat.set(1, vis); t.offset.set(0, 1 - top - vis); }
-      // Back wall: pre-flipped so it reads correctly in the mirror; the copy you see directly is flipped the same way,
-      // so it is the mirror image of the reflection, as a real wall would be.
-      if (slot === 2) { t.offset.x = t.offset.x + t.repeat.x; t.repeat.x = -t.repeat.x; }
+      // Back wall: the right way round on the wall; the mirror shows its true (reversed) reflection, like a real one
       t.needsUpdate = true;
       if (m.material.map) m.material.map.dispose();
       m.material.map = t; m.material.needsUpdate = true;

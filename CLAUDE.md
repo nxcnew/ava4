@@ -101,7 +101,7 @@ The file is one module script divided by `/* ---------------- Section ----------
 ### Studio scene
 
 - **Mirror:** the Studio has a Reflector mirror wall.
-- **Back-wall copies:** the wall behind the camera exists twice, one copy on layer `MIRROR_ONLY` and one on `DIRECT_ONLY`, so it reads correctly both in the mirror and when orbiting. Both copies are horizontally flipped.
+- **Back-wall copies:** the wall behind the camera exists twice, one copy on layer `MIRROR_ONLY` and one on `DIRECT_ONLY`. The image is the right way round on the wall; the mirror shows its true, reversed reflection.
 - **Wallpaper pairing:** `randomWalls` reserves wide images (aspect ≥ 1.2) for the back wall/mirror. It gives the side walls hue-matched non-wide images.
 
 ### Camera

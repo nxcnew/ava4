@@ -6,6 +6,10 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v22 - 2026-11-03 - Studio back wall the right way round
+
+**Change:** the back wall's image is no longer pre-flipped. It reads correctly on the wall, and the mirror shows its true, reversed reflection, as a real mirror does. This is the owner's call and replaces the old "flip so the mirror reads correctly" rule. Images with text will now read backwards in the mirror, as in real life.
+
 ### v21 - 2026-11-03 - Stage show: wider spacing, running on and off, next lineup cues up; natural-colour camera feed
 
 **Spacing:** `ENVS.festival.spread = 2.1`. `stageSlots` scales the layout by the scene's spread; switching scenes relays the stage out.
