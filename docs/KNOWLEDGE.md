@@ -6,6 +6,22 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v14 - 2026-11-03 - Lasers into the crowd; crowd clothes, hair, smoother bodies; Light Director design
+
+**Lasers:**
+
+- **Aim:** each beam is aimed at a point inside the crowd (`laserTarget`) and ends just past it, so beams never run on towards the camera.
+- **One row at a time:** in a laser show one row leads each bar (floor, truss, towers in turn). All rows fire together only on the downbeat of a hit bar. That removes the "web".
+
+**Crowd:**
+
+- **Per-person colours:** every vertex carries a `part` tag (skin, top, trousers, sleeves). Each person carries instanced colours for skin tone, top, bottom (15% a coloured skirt or trousers) and sleeves (short sleeves show skin). `crowdMat` patches Lambert with `onBeforeCompile`, so there are no extra draw calls.
+- **Hair:** 5 instanced styles (short, long, bun, curly, beanie). About 10% are bald. Colours are mostly natural.
+- **Body shape:** the torso is a `LatheGeometry` profile that rounds over the shoulders into the neck, with shoulder balls. This replaced the cylinder and capsule "planks".
+- **Raised arms:** bent at the elbow. Mostly one hand up (left or right, open or fist); both hands is rare.
+
+**Design:** [LIGHT_DIRECTOR.md](LIGHT_DIRECTOR.md) covers the light and pyro coordinator: research, analysis features, the section and accent model, the beat engine (nothing holds still for more than one beat) and a build order. Not built yet.
+
 ### v13 - 2026-11-03 - Main stage show: monitors, flame machines, lasers, punchy-section cues, a new look each load
 
 **Stage front:** at `FRONT_Z = 4.45` there is a row of wedge monitors, 0.4 m tall (below the knee), instanced.
