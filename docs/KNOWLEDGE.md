@@ -6,6 +6,52 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v13 - 2026-11-03 - Main stage show: monitors, flame machines, lasers, punchy-section cues, a new look each load
+
+**Stage front:** at `FRONT_Z = 4.45` there is a row of wedge monitors, 0.4 m tall (below the knee), instanced.
+
+- **Flame machines:** 6 hexagonal columns (`FLAME_X`) in some of the gaps.
+- **Spark fountains:** 4 low boxes (`SPARK_X`) in others.
+- All pyro comes out of these machines.
+
+**Flames:**
+
+- One billboard per machine (it turns to face the camera around the vertical) with an fbm, domain-warped fire shader.
+- Colours run from a white core through yellow and orange to red edges, with a blue root at the nozzle.
+- A burst shoots up in about 0.16 s, burns, then the valve shuts and the fireball lifts off. This replaced the old glow-sprite "blurs".
+
+**Sparks:** `Points` gerbs, white-gold, with gravity.
+
+**Fireworks:**
+
+- Shells climb on a comet trail and burst on a chosen beat (`riseSecs`).
+- Kinds: peony, ring, willow (slow, gold, drooping) and glitter (twinkling).
+
+**Lasers:** 40 heads in uniform rows (14 along the stage floor, 14 on the front truss, 6 up each tower), 7 beams each, in one InstancedMesh of 280 beams.
+
+- **Beams:** 30 m long, fading along their length through vertex colours.
+- **Heads:** each is a dark box with a faint aperture glow.
+- **Patterns** (`laserAim`, one per bar): fans, sweeping fans, criss-cross, rolling waves, tunnels converging on the crowd, and sheets over the crowd.
+
+**Cues (owner's rules):**
+
+- **Punchy sections:** pyro and big lasers only happen in "punchy" sections. `songAnalysis` now returns `punch: [[first beat index, bars]]`, the strongest 3 of all candidates.
+  - **Candidate:** 16+ bars with a beat in every bar (no chill beat), averaging over 1.05x the song's median bar punch (loudness x hit strength).
+  - **Starting point:** after a gap, or at an energy jump (the next 4 bars over 1.35x the previous 4).
+- **Within a section:** a cue every 4 bars on the downbeat, for up to 32 bars, while the beat holds. Sections alternate between pyro and lasers, starting at random.
+  - **Pyro:** all flames, fountains for 4 beats, a 4-shell mixed volley on the first hit and one shell after that.
+  - **Lasers:** all 280 beams, full brightness on hit bars and 0.6 between.
+- **Outside sections:** only a few soft beams from the top row.
+- **Firing:** cues fire on the first frame of each new beat, so slow frames can't skip one.
+
+**A new look each load (`FEST_THEMES`):**
+
+- The themes are neon, ice, inferno, jungle, sunset, royal and chrome.
+- A theme sets the structure finish (`festDark`), the deck, the hemisphere/key light and fog colours, and the festival-only palette (`FEST_PAL`) used by the screens, LED edges, beams, lasers and fireworks. The shared `PALETTE` (club, rig, rooftop) is unchanged.
+- Hemisphere light is a little brighter than before, 0.55-0.7.
+
+**Testing:** `scratchpad/runtest.sh` with `testsrv.py` serves an instrumented copy. It logs over GET `/__log` and saves canvas frames over POST `/__shot`. Always muted.
+
 ### v12 - 2026-11-03 - Camera limits; phones lift and lower with the music
 
 **Camera:**
