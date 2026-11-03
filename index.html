@@ -1058,7 +1058,7 @@ const festScreenMat = new THREE.ShaderMaterial({
       }
       // Live camera on the dancers: tone-mapped, with faint scan lines and a vignette, like a broadcast feed
       // The camera films only the dancers, on black, so they can be cut out (key = brightness). Styles: 0 broadcast,
-      // 1 giants over the art (or the generative look), 2 triptych with mirrored sides, 3 neon silhouettes.
+      // 1 giants over the art (or the generative look), 2 triptych with mirrored sides. Dancers always in their own colours.
       if (uCamMix > 0.001) {
         vec2 cuv = vUv;
         if (uCamFx > 1.5 && uCamFx < 2.5) { float t3 = vUv.x * 3.0, i3 = floor(t3); cuv.x = fract(t3); if (i3 != 1.0) cuv.x = 1.0 - cuv.x; cuv.x = 0.33 + cuv.x * 0.34; }
@@ -1067,8 +1067,7 @@ const festScreenMat = new THREE.ShaderMaterial({
         vec3 cam;
         if (uCamFx < 0.5) cam = c * (0.93 + 0.07 * sin(vUv.y * 700.0)) * (1.0 - 0.45 * length((vUv - 0.5) * vec2(1.0, 1.6))) + outc * 0.25 * (1.0 - key);
         else if (uCamFx < 1.5) cam = mix(outc * 0.55, c * 1.15, key);
-        else if (uCamFx < 2.5) cam = mix(outc * 0.3, c * mix(vec3(1.0), uA * 1.4, step(1.0, abs(floor(vUv.x * 3.0) - 1.0))), key);
-        else { float e = key * (1.0 - smoothstep(0.35, 0.8, dot(c, vec3(0.333)))); cam = outc * 0.35 * (1.0 - key) + mix(uA, uB, vUv.y) * (key * 0.35 + e * 1.6) * (0.7 + 0.5 * uPulse); }
+        else cam = mix(outc * 0.3, c * 1.1, key);                       // triptych
         outc = mix(outc, cam, uCamMix);
       }
       gl_FragColor = vec4(outc, 1.0);
@@ -1109,7 +1108,7 @@ function updateScreen(beat, bar, dt, t) {
     S.bar = bar;
     if (S.camTo && bar >= S.camUntil) S.camTo = 0;
     // The camera: now and then (about one phrase in seven, 90 s apart at least), only with dancers on stage
-    if (!S.camTo && stageSet.size && t - S.lastCam > 90 && Math.random() < 0.14) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; S.camFx = Math.floor(Math.random() * 4); }
+    if (!S.camTo && stageSet.size && t - S.lastCam > 90 && Math.random() < 0.14) { S.camTo = 1; S.camUntil = bar + 8; S.lastCam = t; S.camFx = Math.floor(Math.random() * 3); }
     // Art: 8 or 16 bars of a still, then 8-16 bars of the generative looks; the next still loads in the meantime
     if (S.artTo && bar >= S.until) { S.artTo = 0; S.until = bar + (Math.random() < 0.5 ? 8 : 16); nextArt(); }
     else if (!S.artTo && bar >= S.until && S.next) {
