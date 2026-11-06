@@ -6,6 +6,14 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v26 - 2026-11-06 - Avatar project: MetaHuman route
+
+**Owner's goal:** an outstanding avatar that looks real while dancing. Claude runs the project; the owner handles logins and payments.
+
+**Tool change:** Character Creator is Windows-only and won't run in a virtual machine, so it can't be used on this Mac. The route is now MetaHuman in Unreal Engine 5.7+, which runs on macOS. MetaHumans may be used outside Unreal under $1M/yr revenue.
+
+**Plan:** [AVATAR_PLAN.md](AVATAR_PLAN.md). First milestone is a stock MetaHuman preset dancing in the page.
+
 ### v25 - 2026-11-03 - Brief for a new hero avatar
 
 **Decision:** Amber can't carry the detail the owner wants (expressions, fingers, long-hair physics). The plan is a new, original avatar with two outfits: crop top and joggers for the Studio, and a glitter stage costume for the main stage.
