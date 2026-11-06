@@ -591,7 +591,7 @@ Playwright with swiftshader; see [CHARACTER_PIPELINE.md](CHARACTER_PIPELINE.md) 
 ### Other tools
 
 - **Pages build status:** `gh api repos/nxcnew/ava4/pages/builds/latest`.
-- **Blender:** not installed yet; the Blender scripts need it.
+- **Blender:** 4.5 LTS at `/Applications/Blender.app/Contents/MacOS/Blender` (Homebrew).
 
 ## Open items
 

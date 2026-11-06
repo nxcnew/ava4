@@ -53,6 +53,6 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 
 | Step | State |
 |---|---|
-| Blender, Epic Games Launcher | being installed (Homebrew) |
+| Blender 4.5 LTS, Epic Games Launcher | installed (Homebrew) |
 | Unreal Engine 5.7+ | needs Epic sign-in |
 | Test run | not started |
