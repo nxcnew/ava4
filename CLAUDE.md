@@ -20,6 +20,7 @@ Published from `main` via GitHub Pages: https://nxcnew.github.io/ava4 (repo `nxc
 
 - **Commit and push every change to `main` straight away**, including the user's own edits. The user tests on the live Pages site, so main must always be current. Check that Pages has picked up the commit with `gh api repos/nxcnew/ava4/pages/builds/latest`.
 - When the user pastes code with "don't change anything else", apply exactly those edits and nothing more.
+- **Screenshots: main display only, ever.** Use `scripts/screen.sh shot` (`screencapture -m`). Never capture other displays; if a window is elsewhere, ask the owner to move it to the main screen.
 - Keys and secrets never go in index.html or the repo, because the repo is public. The Jamendo client id is entered in the panel and kept in the browser's local storage. The owner's copy is in `.secrets/keys.env` (gitignored); read it if they ask for the key.
 - Push related multi-file changes together. For example, index.html and manifest.json must go up in the same commit when the manifest format changes, or the live page breaks.
 

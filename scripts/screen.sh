@@ -6,6 +6,7 @@
 #   scripts/screen.sh move X Y           move the mouse only
 #   scripts/screen.sh type "text"        type text into the focused field
 # Screenshot pixels are scaled to screen points, so coordinates read off the image can be used directly.
+# Owner rule: only the main display is ever captured (-m). Never add an option to capture other screens.
 # Needs screen recording and Accessibility allowed for the calling app, and cliclick (brew install cliclick).
 set -e
 W=1400
