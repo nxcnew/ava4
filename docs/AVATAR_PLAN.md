@@ -49,10 +49,17 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 - **Epic Games account:** sign in to the Epic Games Launcher, which is needed to download Unreal Engine.
 - **Screen access:** allow screen recording for the terminal or VS Code, so Claude can see the Unreal editor with `screencapture`.
 
+## Setup notes
+
+- **Disk:** about 248 GB was cleared on 2026-11-08 for Unreal. Deleted files stay held by Time Machine's local snapshots until `sudo tmutil deletelocalsnapshots /` is run.
+- **Install button:** engine versions are installed from the launcher's **Unreal Engine → Library** tab (the **+** by Engine Versions), not from the sidebar's Library. The "Not Installed" button at the top right does nothing.
+- **Error IS-0007** ("failed to save application manifest file to pending directory"): the launcher's `~/Library/Application Support/Epic/EpicGamesLauncher/Data/Manifests/Pending` folder was missing. Create it, quit the launcher, delete the partial `UE_5.x` folder and install again.
+- **Screen:** Claude can take screenshots (screen recording is allowed for VS Code), but can't click.
+
 ## Status
 
 | Step | State |
 |---|---|
 | Blender 4.5 LTS, Epic Games Launcher | installed (Homebrew) |
-| Unreal Engine 5.7+ | needs Epic sign-in |
+| Unreal Engine 5.8.4 | downloading (~42 GB) to `/Users/Shared/Epic Games/UE_5.8` |
 | Test run | not started |
