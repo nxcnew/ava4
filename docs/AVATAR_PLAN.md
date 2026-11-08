@@ -63,6 +63,6 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 |---|---|
 | Blender 4.5 LTS, Epic Games Launcher | installed (Homebrew) |
 | Unreal Engine 5.8.4 | installed at `/Users/Shared/Epic Games/UE_5.8` (42 GB) |
-| Xcode 27.2 | downloading from the App Store; Unreal needs it to compile Metal shaders |
+| Xcode 27.2 | installed at `/Applications/Xcode.app` (3.7 GB); licence and Metal toolchain still to do |
 | Unreal project | `~/Docs/me/Projects/blu.dj/ava4-unreal/HeroAvatar` (outside the repo), with the MetaHumanCharacter, MetaHumanSDK, MetaHuman, Python and editor-scripting plugins on |
 | Test run | not started |
