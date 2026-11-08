@@ -54,12 +54,15 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 - **Disk:** about 248 GB was cleared on 2026-11-08 for Unreal. Deleted files stay held by Time Machine's local snapshots until `sudo tmutil deletelocalsnapshots /` is run.
 - **Install button:** engine versions are installed from the launcher's **Unreal Engine → Library** tab (the **+** by Engine Versions), not from the sidebar's Library. The "Not Installed" button at the top right does nothing.
 - **Error IS-0007** ("failed to save application manifest file to pending directory"): the launcher's `~/Library/Application Support/Epic/EpicGamesLauncher/Data/Manifests/Pending` folder was missing. Create it, quit the launcher, delete the partial `UE_5.x` folder and install again.
-- **Screen:** Claude can take screenshots (screen recording is allowed for VS Code), but can't click.
+- **Screen:** Claude takes screenshots of the main display only (owner rule) and clicks with `scripts/screen.sh` (cliclick, with Accessibility allowed for VS Code). The first click in an app that isn't in front only brings it forward; click again.
+- **Xcode:** Unreal on macOS refuses to start without Xcode ("Xcode Not Found"), because it compiles Metal shaders with it.
 
 ## Status
 
 | Step | State |
 |---|---|
 | Blender 4.5 LTS, Epic Games Launcher | installed (Homebrew) |
-| Unreal Engine 5.8.4 | downloading (~42 GB) to `/Users/Shared/Epic Games/UE_5.8` |
+| Unreal Engine 5.8.4 | installed at `/Users/Shared/Epic Games/UE_5.8` (42 GB) |
+| Xcode 27.2 | downloading from the App Store; Unreal needs it to compile Metal shaders |
+| Unreal project | `~/Docs/me/Projects/blu.dj/ava4-unreal/HeroAvatar` (outside the repo), with the MetaHumanCharacter, MetaHumanSDK, MetaHuman, Python and editor-scripting plugins on |
 | Test run | not started |
