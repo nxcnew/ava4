@@ -58,6 +58,8 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 - **Xcode:** Unreal on macOS refuses to start without Xcode ("Xcode Not Found"), because it compiles Metal shaders with it.
 - **Scripting Unreal:** Unreal's Python remote execution (UDP multicast) doesn't connect on this Mac. Instead `scripts/unreal/bridge.py` runs inside the editor and executes any script dropped in its inbox; start it once per session with `py "<path>/bridge.py"` in the Cmd field, then send scripts with `run.sh`.
 - **MetaHuman by script:** `MetaHumanCharacterEditorSubsystem` creates and edits characters (`try_add_object_to_edit`, `request_auto_rigging`, `request_texture_sources`, `build_meta_human`); `MetaHumanCharacterExportBlueprintLibrary.export_dcc` exports for Blender.
+- **What the build gives:** a body mesh (Unreal mannequin-style names: `pelvis`, `spine_01`…`spine_05`, `upperarm_l`, `pinky_01_l`…, plus corrective bones) and a face mesh. The face's 858 shapes are MetaHuman corrective shapes that RigLogic drives together with the face joints from control curves. They are not expressions on their own, so ARKit shapes have to be baked: pose the face with each ARKit curve, then capture the deformed mesh as one shape.
+- **DCC export** (`export_dcc`) writes `head.dna`, `body.dna` and textures (base colour, normal, SRMF, animated wrinkle maps). Blender can't read DNA without an add-on, so the build plus FBX export is used instead.
 - **Auto-rigging:** runs on Epic's cloud and needs an Epic sign-in in the browser (device code, expires after a few minutes; the login then lasts six months). Rig type `JOINTS_AND_BLEND_SHAPES` bakes the face blend shapes the web page needs. It took about 10 minutes.
 
 ## Status
@@ -69,4 +71,4 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 | Xcode 27.2 | installed at `/Applications/Xcode.app` (3.7 GB), licence accepted, Metal toolchain downloaded (`xcodebuild -downloadComponent MetalToolchain`). No iOS or other platforms needed. |
 | MetaHuman Creator Core Data | installed (5.3 GB), from the launcher's engine Options; Unreal warns without it |
 | Unreal project | `~/Docs/me/Projects/blu.dj/ava4-unreal/HeroAvatar` (outside the repo), with the MetaHumanCharacter, MetaHumanSDK, MetaHuman, Python and editor-scripting plugins on |
-| Test run | stock character `/Game/Hero/MH_Test` created and rigged (joints and blend shapes); textures downloading; then build, export, Blender, page |
+| Test run | stock character `/Game/Hero/MH_Test` rigged (joints and blend shapes), textured (2K), built, and exported as FBX to `ava4-unreal/export/MH_Test/fbx/`. Body: 341 bones (full fingers), 32k verts at LOD0. Face: 874 bones, 34.6k verts, 858 internal MetaHuman shapes. Next: bake ARKit 52 + tongue shapes, then Blender to GLB, then page. |
