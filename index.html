@@ -2034,6 +2034,7 @@ function stabilize(clip, period) {
 /* ---------------- Arena: crowd seats, stage slots, walking in and out ---------------- */
 const AV_COLORS = ['#ff2d95', '#20e0ff', '#ffb020', '#8a5cff', '#5dff9b', '#ff6b4a', '#ff9ad5', '#9be7ff'];
 const avatars = [];     // {name, obj, mixer, hips, hipsY, color, on, seat, slot, dest, st, prevSt, blendT, yaw, targetYaw, walkTo, active}
+window.DA = { avatars, scene, camera, controls, THREE }; // debug handle for the console and automated checks
 const crowdClips = [];  // audience loops: idle, clap, cheer...
 const walkClips = [];   // in-place walk cycles
 const stageSet = new Set();
@@ -3064,7 +3065,7 @@ class RemoteFile {
 }
 
 function setLib(t, err) { const el = $('#libStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
-const START_CHARACTERS = 2, NOT_AT_START = ['Amber'], FIRST_DANCES = 12; // random starters; tick NOT_AT_START ones in by hand
+const START_CHARACTERS = 2, NOT_AT_START = ['Amber'], ALWAYS_AT_START = ['Hero'], FIRST_DANCES = 12; // random starters; tick NOT_AT_START ones in by hand; ALWAYS_AT_START ones always come
 const WEB_DANCES = 6; // from the web: start small, fetch the rest when wanted
 async function loadLibrary(groups, label) {
   const fbx = a => (a || []).filter(f => /\.fbx$/i.test(f.name));
@@ -3086,8 +3087,9 @@ async function loadLibrary(groups, label) {
   const firstDances = allDances.slice(0, nDances), laterDances = allDances.slice(nDances);
   const entries = chars.map(rosterAdd).filter(Boolean);
   const skip = r => NOT_AT_START.some(n => n.toLowerCase() === r.name.toLowerCase());
-  const pool = entries.filter(r => !skip(r));
-  const picked = shuffle(pool.length ? pool : [...entries]).slice(0, START_CHARACTERS);
+  const always = entries.filter(r => ALWAYS_AT_START.some(n => n.toLowerCase() === r.name.toLowerCase()));
+  const pool = entries.filter(r => !skip(r) && !always.includes(r));
+  const picked = [...always, ...shuffle(pool.length ? pool : entries.filter(r => !always.includes(r))).slice(0, START_CHARACTERS)];
   entries.forEach(r => { r.on = picked.includes(r); });
   const firstChars = picked, laterChars = []; // all starters load together behind the loader
   firstChars.forEach(r => { if (r.src.load) r.src.onprogress = () => showDownload(r); });

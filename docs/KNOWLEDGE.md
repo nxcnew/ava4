@@ -6,6 +6,27 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v27 - 2026-11-09 - Hero (MetaHuman) dancing in the page
+
+**Result:** `avatars/Hero.fbx` (15 MB) loads in the page and dances Mixamo dances on the festival main stage, including breakdance handstands. She is always in the starting cast (`ALWAYS_AT_START`).
+
+**How she was made:**
+- **Character:** the MetaHuman preset Sunita (warm olive skin, full lips), with the long curly `Hair_L_MessyClumps` hairstyle and Epic's default T-shirt and shorts as a placeholder outfit. Built in Unreal 5.8 by script through a file bridge (`scripts/unreal/`).
+- **Rig:** Epic's cloud auto-rigging with joints and blend shapes (needs an Epic browser sign-in; it lasts six months).
+- **Conversion:** `scripts/blender/mh_to_mixamo.py` turns the Unreal FBX exports into a Mixamo-convention avatar.
+
+**Problems solved:**
+- **Dances can't be retargeted, only replayed:** the page writes Mixamo quaternions straight onto bones, so the new skeleton must match Mixamo's rest orientations. The script poses MetaHuman into T-pose and copies each bone's roll from Janine.
+- **Tipped-over dances:** Blender's FBX axis conversion left a -90 degree rotation on the Armature node above the Hips. Fix: rotate the rig to Y-up inside Blender, bake it, and export with no axis conversion.
+- **Glowing white avatar:** Blender writes its default white emission colour into FBX; three.js shows it. Set emission to black.
+- **Giant meshes:** Unreal FBX imports put 0.01 scale on the armature object; bake world transforms before reparenting.
+- **Unreal crash:** building a MetaHuman while transient preview actors (spawned for portraits) were in the level crashed the editor in `ForEachCharacterActor`. Build with no preview actors.
+- **Hair cards:** coverage is the red channel of `CardsAtlas_Attribute` (4K). `RooUVSeedCoverage` is a scalp texture.
+
+**Open:** face expressions (ARKit shapes still to bake from the MetaHuman face rig), hair physics (spring chains), crop top and joggers, stage costume.
+
+**Debug handle:** `window.DA` exposes `avatars`, `scene`, `camera`, `controls` and `THREE` for console checks.
+
 ### v26 - 2026-11-06 - Avatar project: MetaHuman route
 
 **Owner's goal:** an outstanding avatar that looks real while dancing. Claude runs the project; the owner handles logins and payments.

@@ -71,4 +71,5 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 | Xcode 27.2 | installed at `/Applications/Xcode.app` (3.7 GB), licence accepted, Metal toolchain downloaded (`xcodebuild -downloadComponent MetalToolchain`). No iOS or other platforms needed. |
 | MetaHuman Creator Core Data | installed (5.3 GB), from the launcher's engine Options; Unreal warns without it |
 | Unreal project | `~/Docs/me/Projects/blu.dj/ava4-unreal/HeroAvatar` (outside the repo), with the MetaHumanCharacter, MetaHumanSDK, MetaHuman, Python and editor-scripting plugins on |
-| Test run | stock character `/Game/Hero/MH_Test` rigged (joints and blend shapes), textured (2K), built, and exported as FBX to `ava4-unreal/export/MH_Test/fbx/`. Body: 341 bones (full fingers), 32k verts at LOD0. Face: 874 bones, 34.6k verts, 858 internal MetaHuman shapes. Next: bake ARKit 52 + tongue shapes, then Blender to GLB, then page. |
+| Test run | done with the stock template (`MH_Test`) |
+| Hero v1 | Sunita preset + long curly hair + default T-shirt/shorts, dancing in the page on the main stage (`avatars/Hero.fbx`, 15 MB, 65 Mixamo bones). Next: ARKit face shapes, hair springs, outfits. |
