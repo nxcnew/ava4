@@ -18,7 +18,7 @@ from mathutils import Vector, Matrix
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
 ap.add_argument("--body", required=True); ap.add_argument("--face", required=True)
-ap.add_argument("--outfit"); ap.add_argument("--maps"); ap.add_argument("--hair"); ap.add_argument("--hair-lod", default="0")
+ap.add_argument("--outfit"); ap.add_argument("--arkit"); ap.add_argument("--maps"); ap.add_argument("--hair"); ap.add_argument("--hair-lod", default="0")
 ap.add_argument("--ref", required=True); ap.add_argument("--out", required=True)
 ap.add_argument("--keep-face-shapes", default="")  # comma list of MetaHuman shape names to keep (debug)
 A = ap.parse_args(argv)
@@ -127,10 +127,24 @@ for pb in sorted(farm.pose.bones, key=lambda p: len(p.parent_recursive)):
         bpy.context.view_layer.update()
 log("posed to T")
 
+def add_arkit(mesh, path):
+    """ARKit shapes baked from the MetaHuman face rig (bake_arkit.py): per-vertex deltas in this mesh's local space."""
+    import numpy as np
+    D = np.load(path); n = len(mesh.data.vertices)
+    co = np.empty(n * 3, np.float32); mesh.data.vertices.foreach_get("co", co); co = co.reshape(-1, 3)
+    if D["base"].shape[0] != n: log("ARKit vertex count mismatch", D["base"].shape[0], n); return
+    mesh.shape_key_add(name="Basis", from_mix=False)
+    for k in D.files:
+        if k == "base": continue
+        kb = mesh.shape_key_add(name=k[0].lower() + k[1:], from_mix=False)
+        kb.data.foreach_set("co", (co + D[k]).ravel())
+    log("ARKit shapes:", len(D.files) - 1)
+
 def apply_armature(mesh):
     bpy.ops.object.select_all(action="DESELECT"); bpy.context.view_layer.objects.active = mesh; mesh.select_set(True)
     for m in mesh.modifiers:
         if m.type == "ARMATURE": bpy.ops.object.modifier_apply(modifier=m.name)
+    if mesh is fmesh and A.arkit: add_arkit(mesh, A.arkit)
     # Unreal FBX imports put a 0.01 scale on the armature object; bake the world transform into the mesh
     mw = mesh.matrix_world.copy(); mesh.parent = None; mesh.matrix_world = mw
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)

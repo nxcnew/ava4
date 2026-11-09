@@ -6,6 +6,16 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v28 - 2026-11-09 - Hero face expressions
+
+**Result:** the hero has 51 ARKit face shapes baked from MetaHuman's own face rig, and the page has an expression performer: while she dances, every few bars she laughs, smiles big, winks, sticks her tongue out, whoops, blows a kiss or bites her lip, eased in and out on the beat.
+
+**How:** in Unreal, Epic's `AS_MetaHuman_ARKit_Mapping` (one ARKit pose per frame) plays on the built face mesh in a Level Sequence; `SequencerTools.export_anim_sequence` bakes the rig output (joints and corrective-shape curves) to an AnimSequence, exported as FBX with the mesh. `scripts/blender/bake_arkit.py` evaluates each frame and saves the difference from the neutral frame. Epic's mapping has no MouthClose, so 51, not 52.
+
+**Gotchas:** Sequencer bakes need a frame rate that divides 30, so the 24 fps mapping plays at 1.25x in a 30 fps sequence. Spawning transient MetaHuman preview actors and then building can crash the editor; remove them first.
+
+**Owner feedback:** the first hero "is not awesome": placeholder clothes, thin stuck-down hair, no expressions. The owner wants a prettier face, more of MetaHuman's human detail brought in, and is open to extending or replacing three.js where needed. Owner also prefers looking up presets online over rendering them locally (CPU cost).
+
 ### v27 - 2026-11-09 - Hero (MetaHuman) dancing in the page
 
 **Result:** `avatars/Hero.fbx` (15 MB) loads in the page and dances Mixamo dances on the festival main stage, including breakdance handstands. She is always in the starting cast (`ALWAYS_AT_START`).

@@ -2335,17 +2335,36 @@ const FACE_SHAPES = {
   browOutL: ['Brow_Raise_Outer_L', 'browOuterUpLeft'], browOutR: ['Brow_Raise_Outer_R', 'browOuterUpRight'],
   browInL: ['Brow_Raise_Inner_L', 'browInnerUp'], browInR: ['Brow_Raise_Inner_R', 'browInnerUp'],
 };
+// Expression performer: full ARKit faces (the MetaHuman hero) laugh, wink, tease and sing along now and then.
+// Values are ARKit blend-shape weights; each one eases in on the beat, holds, and eases out.
+const EXPRESSIONS = {
+  laugh: { w: 3, hype: 2, dur: [1.2, 2.2], v: { jawOpen: 0.5, mouthSmileLeft: 1, mouthSmileRight: 1, cheekSquintLeft: 0.8, cheekSquintRight: 0.8, eyeSquintLeft: 0.5, eyeSquintRight: 0.5, browInnerUp: 0.2 } },
+  bigSmile: { w: 3, hype: 1, dur: [1.5, 3], v: { mouthSmileLeft: 1, mouthSmileRight: 1, cheekSquintLeft: 0.7, cheekSquintRight: 0.7, mouthUpperUpLeft: 0.25, mouthUpperUpRight: 0.25, eyeSquintLeft: 0.3, eyeSquintRight: 0.3 } },
+  winkL: { w: 1.5, hype: 1, dur: [0.6, 0.9], v: { eyeBlinkLeft: 1, mouthSmileLeft: 0.85, mouthSmileRight: 0.35, cheekSquintLeft: 0.7, browDownLeft: 0.3, browOuterUpRight: 0.3 } },
+  winkR: { w: 1.5, hype: 1, dur: [0.6, 0.9], v: { eyeBlinkRight: 1, mouthSmileRight: 0.85, mouthSmileLeft: 0.35, cheekSquintRight: 0.7, browDownRight: 0.3, browOuterUpLeft: 0.3 } },
+  tongue: { w: 1, hype: 1.5, dur: [0.8, 1.4], v: { jawOpen: 0.3, tongueOut: 1, mouthSmileLeft: 0.55, mouthSmileRight: 0.5, eyeSquintLeft: 0.35, eyeSquintRight: 0.35 } },
+  woo: { w: 1.5, hype: 3, dur: [0.9, 1.5], v: { jawOpen: 0.6, mouthFunnel: 0.6, browInnerUp: 0.8, browOuterUpLeft: 0.6, browOuterUpRight: 0.6, eyeWideLeft: 0.4, eyeWideRight: 0.4 } },
+  kiss: { w: 1, hype: 0.5, dur: [0.8, 1.3], v: { mouthPucker: 1, mouthFunnel: 0.3, eyeSquintLeft: 0.25, eyeSquintRight: 0.25, browInnerUp: 0.2 } },
+  lipBite: { w: 1, hype: 0.5, dur: [1, 1.8], v: { mouthRollLower: 0.6, mouthSmileLeft: 0.55, mouthSmileRight: 0.3, eyeSquintLeft: 0.3, eyeSquintRight: 0.3, browDownLeft: 0.15, browDownRight: 0.15 } },
+};
 function buildFace(obj) {
   const targets = [];
   obj.traverse(o => {
     if (!o.isMesh || !o.morphTargetDictionary || !o.morphTargetInfluences) return;
     const dict = o.morphTargetDictionary, idx = {};
     for (const [k, names] of Object.entries(FACE_SHAPES)) { const n = names.find(n => n in dict); if (n) idx[k] = dict[n]; }
-    if (Object.keys(idx).length) targets.push({ mesh: o, idx });
+    if (Object.keys(idx).length) targets.push({ mesh: o, idx, full: 'jawOpen' in dict ? dict : null });
   });
   if (!targets.length) return null;
   const now = performance.now();
-  return { targets, nextBlink: now + 800 + Math.random() * 3000, blinkT: -1e9, again: 0, smile: 0.1, brow: 0, lastBar: null, seed: Math.random() * 100 };
+  return { targets, nextBlink: now + 800 + Math.random() * 3000, blinkT: -1e9, again: 0, smile: 0.1, brow: 0, lastBar: null, seed: Math.random() * 100,
+    expr: null, exprT: 0, exprDur: 0, exprCool: now + 4000, touched: new Set(), hasFull: targets.some(t => t.full) };
+}
+function pickExpression(hype) {
+  const list = Object.entries(EXPRESSIONS), tot = list.reduce((a, [, e]) => a + (hype ? e.hype : e.w), 0);
+  let r = Math.random() * tot;
+  for (const [k, e] of list) { r -= hype ? e.hype : e.w; if (r <= 0) return k; }
+  return list[0][0];
 }
 function updateFace(av, dt, beat) {
   const F = av.face; if (!F) return;
@@ -2361,12 +2380,34 @@ function updateFace(av, dt, beat) {
   const target = !on ? 0.06 : dancing ? (hype ? 0.6 : 0.36) : (hype ? 0.42 : 0.2);
   F.smile += (target + 0.07 * Math.sin(now / 1900 + F.seed) - F.smile) * Math.min(1, dt * 1.2);
   const bar = Math.floor(beat / 4);
-  if (dancing && bar !== F.lastBar) { if (F.lastBar !== null && Math.random() < 0.35) F.brow = 0.5 + Math.random() * 0.35; F.lastBar = bar; }
+  if (dancing && bar !== F.lastBar) {
+    if (F.lastBar !== null && Math.random() < 0.35) F.brow = 0.5 + Math.random() * 0.35;
+    if (F.hasFull && !F.expr && now > F.exprCool && Math.random() < (hype ? 0.45 : 0.3)) {
+      F.expr = pickExpression(hype); const d = EXPRESSIONS[F.expr].dur; F.exprT = now; F.exprDur = (d[0] + Math.random() * (d[1] - d[0])) * 1000;
+    }
+    F.lastBar = bar;
+  }
   F.brow *= Math.exp(-dt * 2.5);
   const sm = Math.max(0, F.smile);
   const v = { blinkL: blink, blinkR: blink, smileL: sm, smileR: sm * 0.96, cheekL: sm * 0.55, cheekR: sm * 0.55, squintL: sm * 0.22, squintR: sm * 0.22,
     browOutL: F.brow, browOutR: F.brow, browInL: F.brow * 0.6, browInR: F.brow * 0.6 };
   for (const t of F.targets) for (const k in t.idx) t.mesh.morphTargetInfluences[t.idx[k]] = v[k];
+  if (!F.hasFull) return;
+  // Performer: envelope 0..1 (0.25 s in, hold, 0.35 s out), layered over the blink/smile above.
+  let env = 0, ev = null;
+  if (F.expr) {
+    const e = now - F.exprT;
+    if (e > F.exprDur + 350) { F.expr = null; F.exprCool = now + 2500 + Math.random() * 5000; }
+    else { env = e < 250 ? e / 250 : e < F.exprDur ? 1 : 1 - (e - F.exprDur) / 350; env = env * env * (3 - 2 * env); ev = EXPRESSIONS[F.expr].v; }
+  }
+  for (const t of F.targets) {
+    if (!t.full) continue;
+    const inf = t.mesh.morphTargetInfluences, base = new Set(Object.values(t.idx));
+    for (const i of F.touched) if (!base.has(i)) inf[i] = 0;
+    if (!ev) continue;
+    for (const k in ev) { const i = t.full[k]; if (i === undefined) continue; F.touched.add(i); inf[i] = Math.max(base.has(i) ? inf[i] * (1 - env) : 0, ev[k] * env); }
+  }
+  if (!ev) F.touched.clear();
 }
 
 let avatarEnv = null;
