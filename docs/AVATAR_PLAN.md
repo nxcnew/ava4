@@ -56,6 +56,9 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 - **Error IS-0007** ("failed to save application manifest file to pending directory"): the launcher's `~/Library/Application Support/Epic/EpicGamesLauncher/Data/Manifests/Pending` folder was missing. Create it, quit the launcher, delete the partial `UE_5.x` folder and install again.
 - **Screen:** Claude takes screenshots of the main display only (owner rule) and clicks with `scripts/screen.sh`; it pauses whenever the owner moves the mouse and resumes after 30 s of stillness (cliclick, with Accessibility allowed for VS Code). The first click in an app that isn't in front only brings it forward; click again.
 - **Xcode:** Unreal on macOS refuses to start without Xcode ("Xcode Not Found"), because it compiles Metal shaders with it.
+- **Scripting Unreal:** Unreal's Python remote execution (UDP multicast) doesn't connect on this Mac. Instead `scripts/unreal/bridge.py` runs inside the editor and executes any script dropped in its inbox; start it once per session with `py "<path>/bridge.py"` in the Cmd field, then send scripts with `run.sh`.
+- **MetaHuman by script:** `MetaHumanCharacterEditorSubsystem` creates and edits characters (`try_add_object_to_edit`, `request_auto_rigging`, `request_texture_sources`, `build_meta_human`); `MetaHumanCharacterExportBlueprintLibrary.export_dcc` exports for Blender.
+- **Auto-rigging:** runs on Epic's cloud and needs an Epic sign-in in the browser (device code, expires after a few minutes; the login then lasts six months). Rig type `JOINTS_AND_BLEND_SHAPES` bakes the face blend shapes the web page needs. It took about 10 minutes.
 
 ## Status
 
@@ -64,6 +67,6 @@ Before any custom design, a stock MetaHuman preset goes through the whole pipeli
 | Blender 4.5 LTS, Epic Games Launcher | installed (Homebrew) |
 | Unreal Engine 5.8.4 | installed at `/Users/Shared/Epic Games/UE_5.8` (42 GB) |
 | Xcode 27.2 | installed at `/Applications/Xcode.app` (3.7 GB), licence accepted, Metal toolchain downloaded (`xcodebuild -downloadComponent MetalToolchain`). No iOS or other platforms needed. |
-| MetaHuman Creator Core Data | downloading (5.3 GB), from the launcher's engine Options; Unreal warns without it |
+| MetaHuman Creator Core Data | installed (5.3 GB), from the launcher's engine Options; Unreal warns without it |
 | Unreal project | `~/Docs/me/Projects/blu.dj/ava4-unreal/HeroAvatar` (outside the repo), with the MetaHumanCharacter, MetaHumanSDK, MetaHuman, Python and editor-scripting plugins on |
-| Test run | not started |
+| Test run | stock character `/Game/Hero/MH_Test` created and rigged (joints and blend shapes); textures downloading; then build, export, Blender, page |
