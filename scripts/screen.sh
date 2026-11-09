@@ -5,6 +5,7 @@
 #   scripts/screen.sh dclick X Y         double-click
 #   scripts/screen.sh move X Y           move the mouse only
 #   scripts/screen.sh type "text"        type text into the focused field
+#   scripts/screen.sh key return         press a key (cliclick kp: names: return, esc, tab, arrow-down...)
 # Screenshot pixels are scaled to screen points, so coordinates read off the image can be used directly.
 # Owner rule: only the main display is ever captured (-m). Never add an option to capture other screens.
 # Owner rule: before every click/move/type, check the mouse is where we left it. If not, the owner is
@@ -40,5 +41,6 @@ case "$1" in
   dclick) guard; cliclick "dc:$(pt "$2" "$3")"; record ;;
   move) guard; cliclick "m:$(pt "$2" "$3")"; record ;;
   type) guard; cliclick "t:$2"; record ;;
-  *) sed -n '2,13p' "$0"; exit 1 ;;
+  key) guard; cliclick "kp:$2"; record ;;
+  *) sed -n '2,14p' "$0"; exit 1 ;;
 esac

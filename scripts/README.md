@@ -25,3 +25,5 @@ Every helper script for this project, with what it's for and how to run it. Add 
   - `cc_prep.py` no longer writes an extra `for_mixamo_v2.fbx`; the upload file comes from step 2.
 
 **Not in the repo:** the autopush watcher is a Claude session tool and lives outside the repo. It's described in [docs/KNOWLEDGE.md](../docs/KNOWLEDGE.md).
+| `unreal/bridge.py` | File mailbox inside the running Unreal editor: every `inbox/*.py` next to it is run in the editor and its output written to `outbox/<name>.out`. Start it once per editor session by typing `py "<path>/bridge.py"` in the editor's Cmd field. Used because Unreal's own Python remote execution (UDP multicast) doesn't connect on this Mac. Live copy: `../ava4-unreal/bridge/`. | `py ".../bridge.py"` in Unreal's console | Unreal 5.8 with the Python plugin |
+| `unreal/run.sh` | Sends a Python script (file or stdin) to the editor through the bridge and prints its output. | `run.sh job.py`, `echo 'print(1)' \| run.sh` | the bridge running |
