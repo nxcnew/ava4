@@ -18,7 +18,7 @@ from mathutils import Vector, Matrix
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ap = argparse.ArgumentParser()
 ap.add_argument("--body", required=True); ap.add_argument("--face", required=True)
-ap.add_argument("--outfit"); ap.add_argument("--arkit"); ap.add_argument("--maps"); ap.add_argument("--hair"); ap.add_argument("--hair-lod", default="0")
+ap.add_argument("--outfit"); ap.add_argument("--arkit"); ap.add_argument("--maps"); ap.add_argument("--hair"); ap.add_argument("--hair-lod", default="0"); ap.add_argument("--hair-root"); ap.add_argument("--hair-tip")
 ap.add_argument("--ref", required=True); ap.add_argument("--out", required=True)
 ap.add_argument("--keep-face-shapes", default="")  # comma list of MetaHuman shape names to keep (debug)
 A = ap.parse_args(argv)
@@ -266,6 +266,30 @@ def strand_texture(name, src, size, dark, light, gain=1.0):
     rgb = np.clip(np.array(dark)[None, None] * (1 - a[..., 1:2]) + np.array(light)[None, None] * a[..., 1:2], 0, 1) * shade
     return save_rgba(name, np.clip(rgb, 0, 1), cov)
 
+def groom_colour(kind):
+    """sRGB colour of the character's own hair or brows, from groom.json (written by mh_export.py). MetaHuman hair is
+    coloured by a linear-space dye and/or melanin; with melanin 0 the dye is the colour."""
+    import json
+    gj = os.path.join(A.hair, "groom.json")
+    if not os.path.exists(gj): return None
+    G = json.load(open(gj))
+    P = next((v for k, v in G.items() if kind in k and "Cards" in k), None) or next((v for k, v in G.items() if kind in k), {})
+    dye = next((v for k, v in P.items() if "dye" in k.lower() and isinstance(v, list)), None)
+    mel = next((v for k, v in P.items() if "melanin" in k.lower()), None)
+    if dye and (mel is None or mel < 0.05): lin = dye[:3]
+    else:
+        m = 0.5 if mel is None else mel; d = (1 - min(1, max(0, m))) ** 1.5
+        lin = (0.30 * d + 0.01, 0.20 * d + 0.006, 0.12 * d + 0.004)
+    srgb = tuple(min(1, max(0, c)) ** (1 / 2.2) for c in lin)
+    log(kind, "colour from groom:", [round(c, 3) for c in srgb])
+    return srgb
+
+def hair_colours():
+    if A.hair_root and A.hair_tip: return tuple(map(float, A.hair_root.split(","))), tuple(map(float, A.hair_tip.split(",")))
+    c = groom_colour("Hair_")
+    if c: return tuple(x * 0.75 for x in c), tuple(min(1, x * 1.2) for x in c)
+    return (0.055, 0.032, 0.018), (0.30, 0.17, 0.08)
+
 # ---- materials
 def img(path, size=2048):
     """Opaque maps go into the FBX as JPEG (quality 88), so the page downloads far less."""
@@ -314,11 +338,14 @@ def assign(mesh):
                       else mats["EyeL"] if "Eye" in n and "lash" not in n.lower() else mats["Lash"] if "lash" in n.lower() else s.material)
 assign(fmesh); assign(bmesh)
 if hair_objs:
-    ht = strand_texture("Hero_Hair", os.path.join(A.hair, "CardsAtlas_Attribute.png"), 2048, (0.055, 0.032, 0.018), (0.30, 0.17, 0.08), gain=2.2)
+    atlas = next(os.path.join(A.hair, f) for f in ("Hair_Attribute.png", "CardsAtlas_Attribute.png") if os.path.exists(os.path.join(A.hair, f)))
+    root_c, tip_c = hair_colours()
+    ht = strand_texture("Hero_Hair", atlas, 2048, root_c, tip_c, gain=2.2)
     hm = make_mat("Hero_Hair", ht, alpha=True, rough=0.45)
     for o in hair_objs: o.data.materials.clear(); o.data.materials.append(hm)
 if brow_objs and os.path.exists(os.path.join(A.hair, "Brows_Attribute.png")):
-    bt = strand_texture("Hero_Brows", os.path.join(A.hair, "Brows_Attribute.png"), 1024, (0.03, 0.02, 0.015), (0.06, 0.04, 0.03), gain=1.3)
+    bc = groom_colour("Eyebrows") or (0.06, 0.04, 0.03)
+    bt = strand_texture("Hero_Brows", os.path.join(A.hair, "Brows_Attribute.png"), 1024, tuple(x * 0.6 for x in bc), bc, gain=1.3)
     bm = make_mat("Hero_Brows", bt, alpha=True, rough=0.6)
     for o in brow_objs: o.data.materials.clear(); o.data.materials.append(bm)
 fmesh.name = "Hero_Head"; bmesh.name = "Hero_Body"
