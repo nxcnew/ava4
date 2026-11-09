@@ -6,6 +6,20 @@ Running context for this project: what was decided, why, and what's still open. 
 
 ## Version log
 
+### v29 - 2026-11-09 - Composer close-up, Elise, Pixel Streaming set-up
+
+**Direction (owner):** forget dancing for now. A close-up 3D character the user talks to (a live music composer/DJ) comes first; dance videos later. Keep third-party services and running costs to a minimum: run on the visitor's device wherever possible. A mix of 2D video (later, for photoreal dance clips rendered once) and 3D (talking, live) is the plan. Purchased characters keep their own hair.
+
+**Elise:** the owner bought Elise on Fab (Standard License, by xAndrei). She is an editable MetaHuman that uses Epic's own hair (BobMessy), so the pipeline handles her: `scripts/unreal/mh_export.py` then `mh_to_mixamo.py`. Her FBX is kept out of the public repo (licence; listed in `.git/info/exclude`); hosting for licensed avatars is still to be decided.
+
+**composer.html:** a portrait page for one character (`?who=Elise`): spot key, fill and rim lights, a light-through-skin diffuse wrap, wet eyes, alpha-tested hair with a spring sway, gaze to camera, breathing idle, blinks, micro-expressions and expression buttons. Gotchas: three.js physical light intensities are in candela, so studio values of 4 to 6 are right at 1-2 m; applying the skin wrap to the GGX specular term causes bright speckles where light grazes lips and lids, so it is diffuse only.
+
+**Owner verdict:** still far from Elise's own Unreal render. Main gaps: removed eye layers (occlusion, lacrimal film, cornea), thin brows, crude hair cards, no ambient occlusion, uniform skin roughness, spotlights instead of a soft key. Plan: a focused WebGPU "MetaHuman renderer" (skin scattering, eye shader, wrinkle maps, strand hair), in phases.
+
+**Pixel Streaming (reference only, runs on the Mac):** Pixel Streaming 2 is enabled in the project; Epic's servers (UE5.7-0.1.2) are in `ava4-unreal/ps-infra/` with their own Node 22. Level `/Game/PortraitStudio` has Elise with Epic's captured idle and happy-face loops, rect key and fill, rim spots and an 85 mm camera. Start: `node ./dist/index.js --serve --http_root ./www --player_port 8080 --streamer_port 8888` in `SignallingWebServer` (with `platform_scripts/bash/node/bin` on PATH), then run the editor binary with the project, `/Game/PortraitStudio -game -RenderOffScreen -ResX=1600 -ResY=900 -PixelStreamingURL=ws://127.0.0.1:8888`. The streamer connected (ping/pong) but the stream wasn't viewed yet. Run setup.sh with `--publicip 127.0.0.1` so it doesn't call ipify. MetaHumans need `r.GPUSkin.Support16BitBoneIndex`, `r.GPUSkin.UnlimitedBoneInfluences` and `r.SkinCache.CompileShaders` in the project's DefaultEngine.ini.
+
+**Unreal bridge:** now starts by itself with the project (`Content/Python/init_unreal.py`).
+
 ### v28 - 2026-11-09 - Hero face expressions
 
 **Result:** the hero has 51 ARKit face shapes baked from MetaHuman's own face rig, and the page has an expression performer: while she dances, every few bars she laughs, smiles big, winks, sticks her tongue out, whoops, blows a kiss or bites her lip, eased in and out on the beat.

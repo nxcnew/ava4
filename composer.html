@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Composer Close-up</title>
+<style>
+  :root { --bg: #07060b; --fg: #eee; --muted: #9a97a8; --chip: rgba(255,255,255,0.08); --chip-on: rgba(255,80,200,0.35); }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="light"]) { --bg: #07060b; } }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; font: 13px/1.4 system-ui, sans-serif; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 42%, transparent 45%, rgba(0,0,0,0.55) 100%); }
+  #ui { position: fixed; left: 16px; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #ui button { background: var(--chip); color: var(--fg); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  #ui button:hover { background: var(--chip-on); }
+  #status { position: fixed; left: 16px; top: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vignette"></div>
+<div id="status">loading…</div>
+<div id="ui"></div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// Composer close-up: one character, head and shoulders, lit like a stage portrait.
+// Skin with a light-through-skin falloff, wet eyes, alpha-tested hair with a lagging sway, gaze to camera,
+// breathing idle, blinks and micro-expressions. ?who=<avatar name in avatars/> picks the character (default Hero).
+import * as THREE from 'three';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const who = new URLSearchParams(location.search).get('who') || 'Hero';
+const status = t => { $('#status').textContent = t; };
+
+/* ---------------- Renderer, camera, post ---------------- */
+const canvas = $('#c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(20, 1, 0.05, 50);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.minDistance = 0.35; controls.maxDistance = 4;
+
+const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.18, 0.5, 1.0);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); composer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.fov = w / h < 0.9 ? 30 : 20; // phones: wider lens so the face still fits
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+/* ---------------- Backdrop: dark stage with blurred lights ---------------- */
+(function backdrop() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 576;
+  const g = c.getContext('2d');
+  const bg = g.createRadialGradient(512, 260, 40, 512, 300, 620);
+  bg.addColorStop(0, '#2a1838'); bg.addColorStop(0.55, '#120c1d'); bg.addColorStop(1, '#050409');
+  g.fillStyle = bg; g.fillRect(0, 0, 1024, 576);
+  const cols = ['#ff4fd8', '#4fd8ff', '#ffb24f', '#8a5cff', '#ff6b8a'];
+  for (let i = 0; i < 46; i++) {
+    const x = Math.random() * 1024, y = 60 + Math.random() * 360, r = 10 + Math.random() * 46, col = cols[i % cols.length];
+    const rg = g.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, col + 'aa'); rg.addColorStop(0.6, col + '33'); rg.addColorStop(1, col + '00');
+    g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  scene.background = t;
+})();
+
+/* ---------------- Lights: warm key, cool fill, coloured rims, eye catchlight ---------------- */
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.add(new THREE.HemisphereLight(0x8a7aa8, 0x1a1020, 0.25));
+function spot(color, intensity, pos, angle = 0.45, shadow = false) {
+  const s = new THREE.SpotLight(color, intensity, 0, angle, 0.85, 2);
+  s.position.set(...pos); scene.add(s); scene.add(s.target);
+  if (shadow) { s.castShadow = true; s.shadow.mapSize.set(2048, 2048); s.shadow.bias = -0.00008; s.shadow.normalBias = 0.015; s.shadow.radius = 5; s.shadow.camera.near = 0.3; s.shadow.camera.far = 6; }
+  return s;
+}
+const key = spot(0xffdcc0, 4.2, [-0.85, 2.05, 1.25], 0.42, true);
+const fill = spot(0xbfd0ff, 0.7, [1.1, 1.55, 1.0], 0.6);
+const rimA = spot(0xff4fd8, 6, [0.75, 1.95, -0.95], 0.5);
+const rimB = spot(0x4fd8ff, 4.5, [-0.8, 1.8, -1.0], 0.5);
+const catchLight = new THREE.PointLight(0xffffff, 0.02, 3, 2); scene.add(catchLight);
+const lights = [key, fill, rimA, rimB];
+Object.assign(window, { L: { key, fill, rimA, rimB, catchLight, bloom, renderer } }); // live tuning from the console
+
+/* ---------------- Materials ---------------- */
+// Skin: GGX specular, a little sheen (peach fuzz) and clearcoat (oil), plus wrapped diffuse that lets red light
+// bleed past the shadow edge, the cheap stand-in for subsurface scattering.
+// (Wrapped only for the diffuse term: feeding it to the GGX specular blows up where light grazes the skin.)
+const SKIN_CHUNK = THREE.ShaderChunk.lights_physical_pars_fragment.replace(
+  'reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );',
+  `vec3 sssW = vec3( 0.42, 0.17, 0.09 );
+  float nlRaw = dot( geometryNormal, directLight.direction );
+  vec3 wrapIrr = saturate( ( vec3( nlRaw ) + sssW ) / ( 1.0 + sssW ) ) * directLight.color;
+  reflectedLight.directDiffuse += wrapIrr * BRDF_Lambert( material.diffuseColor );`);
+function skinMaterial(old, face) {
+  const m = new THREE.MeshPhysicalMaterial({
+    name: old.name, map: old.map, normalMap: old.normalMap,
+    roughness: face ? 0.46 : 0.52, specularIntensity: 0.5, sheen: 0.15, sheenColor: new THREE.Color(1, 0.86, 0.78), sheenRoughness: 0.55,
+    clearcoat: face ? 0.05 : 0.0, clearcoatRoughness: 0.32, envMapIntensity: 0.32,
+  });
+  if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+  if (m.normalMap) m.normalScale.set(1.1, 1.1);
+  m.onBeforeCompile = s => { s.fragmentShader = s.fragmentShader.replace('#include <lights_physical_pars_fragment>', SKIN_CHUNK); };
+  m.customProgramCacheKey = () => 'skin';
+  return m;
+}
+const hairUniforms = { uSway: { value: new THREE.Vector3() }, uRootY: { value: 0 }, uLen: { value: 0.3 } };
+function hairMaterial(old, brows) {
+  const m = new THREE.MeshPhysicalMaterial({
+    name: old.name, map: old.map, alphaTest: brows ? 0.4 : 0.32, alphaToCoverage: true, side: THREE.DoubleSide,
+    roughness: 0.42, specularIntensity: 0.7, sheen: 0.8, sheenColor: new THREE.Color(1.0, 0.78, 0.6), sheenRoughness: 0.32, envMapIntensity: 0.4,
+  });
+  if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+  if (!brows) {
+    // Hair sway: vertices hang below the scalp; the further down, the more they follow the lagging spring offset.
+    m.onBeforeCompile = s => {
+      Object.assign(s.uniforms, hairUniforms);
+      s.vertexShader = 'uniform vec3 uSway; uniform float uRootY; uniform float uLen;\n' + s.vertexShader.replace('#include <skinning_vertex>',
+        `#include <skinning_vertex>
+        float hw = clamp( ( uRootY - position.y ) / uLen, 0.0, 1.0 ); hw = hw * hw;
+        transformed += uSway * hw;`);
+    };
+    m.customProgramCacheKey = () => 'hair';
+  }
+  return m;
+}
+function eyeMaterial(old) {
+  const m = new THREE.MeshPhysicalMaterial({ name: old.name, map: old.map, roughness: 0.25, clearcoat: 0.5, clearcoatRoughness: 0.08, envMapIntensity: 1.1, specularIntensity: 1 });
+  if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+  return m;
+}
+function convert(old) {
+  const n = old.name || '';
+  if (/Face/.test(n)) return skinMaterial(old, true);
+  if (/Body/.test(n)) return skinMaterial(old, false);
+  if (/Hair/.test(n)) return hairMaterial(old, false);
+  if (/Brow/.test(n)) return hairMaterial(old, true);
+  if (/Lash/.test(n)) { const m = hairMaterial(old, true); m.alphaTest = 0.5; m.color = new THREE.Color(0.25, 0.25, 0.25); return m; }
+  if (/Eye/.test(n)) return eyeMaterial(old);
+  if (/Teeth/.test(n)) { const m = new THREE.MeshPhysicalMaterial({ name: n, map: old.map, roughness: 0.28, envMapIntensity: 0.4 }); if (m.map) m.map.colorSpace = THREE.SRGBColorSpace; return m; }
+  return new THREE.MeshStandardMaterial({ name: n, map: old.map || null, color: old.color, roughness: 0.75 });
+}
+
+/* ---------------- Character ---------------- */
+const loader = new FBXLoader();
+const load = url => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+const canon = n => 'mixamorig' + n.replace(/^mixamorig\d*:?/, '');
+const C = { who };
+window.C = C; // debug handle
+
+async function main() {
+  status(`loading ${who}…`);
+  const obj = await load(`avatars/${who}.fbx`);
+  obj.traverse(o => {
+    if (o.isBone) o.name = canon(o.name);
+    if (o.isMesh) {
+      o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+      o.material = Array.isArray(o.material) ? o.material.map(convert) : convert(o.material);
+      if (o.morphTargetDictionary && 'jawOpen' in o.morphTargetDictionary) C.face = o;
+      if (/^Hair/.test(o.name)) {
+        o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox;
+        hairUniforms.uRootY.value = Math.max(hairUniforms.uRootY.value || -1e9, b.max.y - (b.max.y - b.min.y) * 0.08);
+        hairUniforms.uLen.value = Math.max(hairUniforms.uLen.value, (b.max.y - b.min.y) * 0.85);
+      }
+    }
+  });
+  // FBX is in centimetres or metres depending on the export; normalise to a 1.70 m figure standing at the origin.
+  const box = new THREE.Box3().setFromObject(obj), h = box.max.y - box.min.y;
+  obj.scale.multiplyScalar(1.7 / h); obj.position.y -= box.min.y * 1.7 / h;
+  scene.add(obj); C.obj = obj;
+  obj.traverse(o => { if (o.isBone && /Head$/.test(o.name)) C.head = o; if (o.isBone && /Neck$/.test(o.name)) C.neck = o; });
+  obj.updateMatrixWorld(true);
+  // hair sway is computed in the hair mesh's own (bind) space, which is scaled with the object
+  C.hairScale = 1.7 / h;
+
+  // Idle: breathing and small weight shifts, played in place.
+  C.mixer = new THREE.AnimationMixer(obj);
+  const idles = [];
+  for (const f of ['crowd - Breathing Idle.fbx', 'crowd - Happy Idle 1.fbx']) {
+    try {
+      const a = await load('crowd/' + encodeURIComponent(f));
+      const clip = a.animations[0];
+      // Hips position is in the clip's own units (often centimetres); she stays on her spot, so drop it.
+      clip.tracks = clip.tracks.filter(t => !/Hips\.position$/.test(t.name)).map(t => { const i = t.name.indexOf('.'); t.name = canon(t.name.slice(0, i)) + t.name.slice(i); return t; });
+      idles.push(clip);
+    } catch (e) { console.warn('idle', f, e); }
+  }
+  if (idles.length) { C.mixer.clipAction(idles[0]).play(); C.idles = idles; }
+  C.mixer.update(0.01);
+
+  frameFace();
+  buildUI();
+  status(`${who} · drag to orbit, scroll to zoom`);
+}
+
+function frameFace() {
+  C.obj.updateMatrixWorld(true);
+  const p = C.head.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.06, 0));
+  controls.target.copy(p);
+  camera.position.copy(p).add(new THREE.Vector3(0.12, 0.02, 1.15));
+  key.target.position.copy(p); fill.target.position.copy(p); rimA.target.position.copy(p); rimB.target.position.copy(p);
+  for (const l of lights) { l.position.y += p.y - 1.6; l.position.x += p.x; l.position.z += p.z; }
+  key.shadow.camera.updateProjectionMatrix();
+}
+
+/* ---------------- Face: blinks, gaze, micro-expressions, performed expressions ---------------- */
+const EXPR = {
+  smile: { mouthSmileLeft: 0.9, mouthSmileRight: 0.9, cheekSquintLeft: 0.6, cheekSquintRight: 0.6, eyeSquintLeft: 0.25, eyeSquintRight: 0.25 },
+  laugh: { jawOpen: 0.5, mouthSmileLeft: 1, mouthSmileRight: 1, cheekSquintLeft: 0.85, cheekSquintRight: 0.85, eyeSquintLeft: 0.55, eyeSquintRight: 0.55, browInnerUp: 0.25 },
+  wink: { eyeBlinkLeft: 1, mouthSmileLeft: 0.85, mouthSmileRight: 0.35, cheekSquintLeft: 0.7, browDownLeft: 0.3, browOuterUpRight: 0.3 },
+  tease: { jawOpen: 0.28, tongueOut: 1, mouthSmileLeft: 0.55, mouthSmileRight: 0.5, eyeSquintLeft: 0.35, eyeSquintRight: 0.35 },
+  woo: { jawOpen: 0.6, mouthFunnel: 0.6, browInnerUp: 0.8, browOuterUpLeft: 0.6, browOuterUpRight: 0.6, eyeWideLeft: 0.4, eyeWideRight: 0.4 },
+  kiss: { mouthPucker: 1, mouthFunnel: 0.3, eyeSquintLeft: 0.25, eyeSquintRight: 0.25, browInnerUp: 0.2 },
+  flirt: { mouthRollLower: 0.55, mouthSmileLeft: 0.6, mouthSmileRight: 0.3, eyeSquintLeft: 0.35, eyeSquintRight: 0.3, browDownLeft: 0.15, browOuterUpRight: 0.25 },
+  surprise: { jawOpen: 0.35, eyeWideLeft: 0.8, eyeWideRight: 0.8, browInnerUp: 0.9, browOuterUpLeft: 0.8, browOuterUpRight: 0.8, mouthFunnel: 0.2 },
+};
+const F = { blinkAt: performance.now() + 1500, blinkT: -1e9, expr: null, exprT: 0, exprDur: 0, micro: {}, microAt: 0, cur: {} };
+function play(name, dur = 1800) { F.expr = name; F.exprT = performance.now(); F.exprDur = dur; }
+C.play = play;
+
+function faceTargets(now) {
+  const t = {};
+  const add = (k, v) => { t[k] = Math.max(t[k] || 0, v); };
+  // resting face: a hint of a smile that breathes
+  add('mouthSmileLeft', 0.12 + 0.04 * Math.sin(now / 2300)); add('mouthSmileRight', 0.11 + 0.04 * Math.sin(now / 2300 + 0.5));
+  // micro-expressions every few seconds: a brow flick, a half smile, a squint
+  if (now > F.microAt) {
+    const opts = [{ browInnerUp: 0.35, browOuterUpLeft: 0.25, browOuterUpRight: 0.25 }, { mouthSmileLeft: 0.35, cheekSquintLeft: 0.25 },
+      { eyeSquintLeft: 0.25, eyeSquintRight: 0.25 }, { mouthPressLeft: 0.25, mouthPressRight: 0.25 }, {}];
+    F.micro = opts[Math.floor(Math.random() * opts.length)]; F.microT = now; F.microAt = now + 2500 + Math.random() * 4000;
+  }
+  const me = (now - F.microT) / 1000, mEnv = me < 0.3 ? me / 0.3 : me < 1.2 ? 1 : Math.max(0, 1 - (me - 1.2) / 0.6);
+  for (const k in F.micro) add(k, F.micro[k] * mEnv);
+  // performed expression
+  if (F.expr) {
+    const e = now - F.exprT; let env = e < 220 ? e / 220 : e < F.exprDur ? 1 : 1 - (e - F.exprDur) / 380;
+    if (env <= 0 && e > F.exprDur) F.expr = null; else { env = env * env * (3 - 2 * env); for (const k in EXPR[F.expr]) add(k, EXPR[F.expr][k] * env); }
+  }
+  // blinks (suppressed on the winking eye's partner only by max())
+  if (now > F.blinkAt) { F.blinkT = now; F.blinkAt = now + 1800 + Math.random() * 4000; if (Math.random() < 0.15) F.blinkAt = now + 260; }
+  const bt = (now - F.blinkT) / 1000, blink = bt < 0 || bt > 0.22 ? 0 : bt < 0.07 ? bt / 0.07 : 1 - (bt - 0.07) / 0.15;
+  add('eyeBlinkLeft', blink); add('eyeBlinkRight', blink);
+  return t;
+}
+
+const tmp = { v: new THREE.Vector3(), v2: new THREE.Vector3(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), m: new THREE.Matrix4() };
+function gaze(t) {
+  // eyes: camera direction in head space -> eyeLook shapes (character faces +Z, her left is +X)
+  const inv = tmp.m.copy(C.head.matrixWorld).invert();
+  const d = tmp.v.copy(camera.position).applyMatrix4(inv).normalize();
+  const yaw = Math.atan2(d.x, d.z), pitch = Math.asin(clamp(d.y, -1, 1));
+  const k = 1 / THREE.MathUtils.degToRad(28);
+  const yl = clamp(yaw * k, -1, 1), pu = clamp(pitch * k, -1, 1);
+  const set = (n, v) => { t[n] = Math.max(t[n] || 0, v); };
+  if (yl > 0) { set('eyeLookOutLeft', yl); set('eyeLookInRight', yl); } else { set('eyeLookInLeft', -yl); set('eyeLookOutRight', -yl); }
+  if (pu > 0) { set('eyeLookUpLeft', pu); set('eyeLookUpRight', pu); } else { set('eyeLookDownLeft', -pu); set('eyeLookDownRight', -pu); }
+}
+function aimHead(w) {
+  // turn the head partway toward the camera, on top of the idle animation
+  const head = C.head; head.updateMatrixWorld(true);
+  const hp = head.getWorldPosition(tmp.v);
+  const fwd = tmp.v2.set(0, 0, 1).applyQuaternion(head.getWorldQuaternion(tmp.q)).normalize();
+  const to = new THREE.Vector3().subVectors(camera.position, hp).normalize();
+  const delta = new THREE.Quaternion().setFromUnitVectors(fwd, to);
+  const ang = 2 * Math.acos(clamp(delta.w, -1, 1)), lim = THREE.MathUtils.degToRad(30);
+  const s = w * Math.min(1, lim / Math.max(ang, 1e-4));
+  const part = new THREE.Quaternion().slerp(delta, s);
+  const world = part.multiply(head.getWorldQuaternion(tmp.q2));
+  const parentQ = head.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+  head.quaternion.copy(parentQ.multiply(world));
+  head.updateMatrixWorld(true);
+}
+
+/* ---------------- Hair sway: a damped spring that lags behind the head ---------------- */
+const H = { s: new THREE.Vector3(), v: new THREE.Vector3(), prev: null };
+function updateHair(dt) {
+  if (!C.head) return;
+  const head = C.head;
+  const tip = new THREE.Vector3(0, -0.25 / C.hairScale, 0); // a point a hand's length below the head, rigidly attached
+  const p = head.localToWorld(tip.clone());
+  if (!H.prev) { H.prev = p.clone(); H.vel = new THREE.Vector3(); }
+  const vel = p.clone().sub(H.prev).divideScalar(Math.max(dt, 1e-3));
+  const acc = vel.clone().sub(H.vel).divideScalar(Math.max(dt, 1e-3));
+  H.prev.copy(p); H.vel.copy(vel);
+  // gravity: hanging hair stays nearer world-down than the head's own down when the head tilts
+  const headDown = new THREE.Vector3(0, -1, 0).applyQuaternion(head.getWorldQuaternion(new THREE.Quaternion()));
+  const grav = new THREE.Vector3(0, -1, 0).sub(headDown).multiplyScalar(0.18);
+  const kS = 55, kD = 7;
+  const a = grav.clone().sub(H.s).multiplyScalar(kS).sub(H.v.clone().multiplyScalar(kD)).sub(acc.multiplyScalar(0.9));
+  H.v.addScaledVector(a, dt); H.s.addScaledVector(H.v, dt);
+  if (H.s.length() > 0.12) H.s.setLength(0.12);
+  // to the hair mesh's bind space: undo the object's rotation and scale
+  const inv = C.obj.getWorldQuaternion(new THREE.Quaternion()).invert();
+  hairUniforms.uSway.value.copy(H.s).applyQuaternion(inv).divideScalar(C.hairScale);
+}
+
+/* ---------------- UI ---------------- */
+function buildUI() {
+  const ui = $('#ui');
+  for (const n of Object.keys(EXPR)) {
+    const b = document.createElement('button'); b.textContent = n; b.onclick = () => play(n, n === 'wink' ? 700 : 1800); ui.appendChild(b);
+  }
+  const b = document.createElement('button'); b.textContent = 'shake head'; b.onclick = () => { C.shakeT = performance.now(); }; ui.appendChild(b);
+}
+
+/* ---------------- Frame loop ---------------- */
+const clock = new THREE.Clock();
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05), now = performance.now();
+  if (C.mixer) {
+    C.mixer.update(dt);
+    C.obj.updateMatrixWorld(true);
+    aimHead(0.55);
+    if (C.shakeT) { // demo: a playful head shake to show the hair move
+      const e = (now - C.shakeT) / 1000;
+      if (e < 1.3) { C.head.rotateY(Math.sin(e * 14) * 0.32 * (1 - e / 1.3)); C.head.rotateZ(Math.sin(e * 7) * 0.08 * (1 - e / 1.3)); C.head.updateMatrixWorld(true); } else C.shakeT = 0;
+    }
+    if (C.face) {
+      const t = faceTargets(now); gaze(t);
+      const dict = C.face.morphTargetDictionary, inf = C.face.morphTargetInfluences;
+      for (const k in dict) { const target = t[k] || 0; const i = dict[k]; inf[i] += (target - inf[i]) * Math.min(1, dt * 18); }
+    }
+    updateHair(dt);
+  }
+  catchLight.position.copy(camera.position).add(new THREE.Vector3(0.05, 0.12, 0));
+  controls.update();
+  composer.render();
+}
+frame();
+main().catch(e => { console.error(e); status('failed: ' + e.message); });
+</script>
+</body>
+</html>
