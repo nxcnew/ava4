@@ -3106,7 +3106,7 @@ class RemoteFile {
 }
 
 function setLib(t, err) { const el = $('#libStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
-const START_CHARACTERS = 2, NOT_AT_START = ['Amber'], ALWAYS_AT_START = ['Hero'], FIRST_DANCES = 12; // random starters; tick NOT_AT_START ones in by hand; ALWAYS_AT_START ones always come
+const START_CHARACTERS = 2, NOT_AT_START = ['Amber'], ALWAYS_AT_START = [], FIRST_DANCES = 12; // random starters; tick NOT_AT_START ones in by hand; ALWAYS_AT_START ones always come
 const WEB_DANCES = 6; // from the web: start small, fetch the rest when wanted
 async function loadLibrary(groups, label) {
   const fbx = a => (a || []).filter(f => /\.fbx$/i.test(f.name));
